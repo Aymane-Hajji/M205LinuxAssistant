@@ -58,6 +58,9 @@
                 <button @click="currentRoute = 'dashboard'" :class="navClass('dashboard')">
                     <i class="ph ph-chart-polar text-xl md:mr-3"></i><span class="hidden md:block text-sm font-bold">Telemetry</span>
                 </button>
+                <button @click="currentRoute = 'revision'" :class="navClass('revision')">
+                    <i class="ph ph-book-open text-xl md:mr-3"></i><span class="hidden md:block text-sm font-bold">Cheat Sheet</span>
+                </button>
                 <button @click="currentRoute = 'study'" :class="navClass('study')">
                     <i class="ph ph-brain text-xl md:mr-3"></i><span class="hidden md:block text-sm font-bold">Hardcore Recall</span>
                 </button>
@@ -101,6 +104,7 @@
                 <div class="flex items-center gap-4">
                     <h2 class="text-lg font-black uppercase tracking-wider text-white">
                         <span v-if="currentRoute==='dashboard'">Command Center</span>
+                        <span v-if="currentRoute==='revision'">Knowledge Base (Cheat Sheet)</span>
                         <span v-if="currentRoute==='study'">Active Recall Matrix</span>
                         <span v-if="currentRoute==='drill'">Timed Combat Drill</span>
                         <span v-if="currentRoute==='flow'">Sequential Configuration</span>
@@ -164,6 +168,56 @@
                                 </div>
                                 <div v-if="weakestTasks.length === 0" class="text-sm text-slate-500 font-mono italic">
                                     Insufficient data. Engage in combat drills to map neural weaknesses.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- REVISION / CHEAT SHEET MODE -->
+                    <div v-if="currentRoute === 'revision'" class="animate-fade-in space-y-8">
+                        <header class="mb-4">
+                            <p class="text-slate-400 text-sm">Review all configuration paths, commands, and code blocks at your own pace without pressure.</p>
+                        </header>
+
+                        <!-- Topic Selector -->
+                        <div class="flex overflow-x-auto gap-2 pb-2">
+                            <button v-for="topic in topics" :key="'rev_'+topic.id" 
+                                @click="activeRevisionTopicId = topic.id"
+                                class="px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition border"
+                                :class="activeRevisionTopicId === topic.id ? 'bg-brand-600 border-brand-500 text-white' : 'bg-dark-800 border-slate-700 text-slate-400 hover:text-white'">
+                                {{ topic.title }}
+                            </button>
+                        </div>
+
+                        <div v-if="activeRevisionTopic" class="space-y-6">
+                            <div v-for="(sec, sIdx) in activeRevisionTopic.sections" :key="'rev_sec_'+sIdx" class="bg-dark-800 rounded-xl border border-slate-700 overflow-hidden shadow-lg">
+                                <div class="bg-dark-900 px-5 py-4 border-b border-slate-700 flex items-center gap-3">
+                                    <div class="w-6 h-6 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center font-bold text-xs">{{ sIdx + 1 }}</div>
+                                    <h3 class="font-bold text-white uppercase tracking-wide text-sm">{{ sec.heading }}</h3>
+                                </div>
+                                <div class="p-5 space-y-6">
+                                    <div v-for="(item, iIdx) in sec.items" :key="'rev_item_'+iIdx" class="space-y-3 pb-4 border-b border-slate-700/50 last:border-0 last:pb-0">
+                                        <div class="flex items-start gap-2">
+                                            <i class="ph-fill ph-caret-right text-brand-500 mt-1"></i>
+                                            <span class="text-slate-300 font-medium leading-relaxed">{{ item.text }}</span>
+                                        </div>
+                                        
+                                        <div v-if="item.path" class="ml-6 flex items-center gap-2">
+                                            <i class="ph-fill ph-folder-open text-amber-500"></i>
+                                            <code class="px-3 py-1.5 bg-amber-500/10 text-amber-400 rounded border border-amber-500/20 font-mono text-xs">{{ item.path }}</code>
+                                        </div>
+                                        
+                                        <div v-if="item.commands || item.code" class="ml-6 bg-console rounded-lg p-4 border border-slate-700 font-mono text-xs overflow-x-auto shadow-inner">
+                                            <div v-if="item.commands" class="flex flex-col gap-1.5 text-green-400">
+                                                <div v-for="(cmd, cmdIdx) in item.commands" :key="cmdIdx" class="flex">
+                                                    <span class="text-slate-600 mr-2">$</span>
+                                                    <span class="select-all">{{ cmd }}</span>
+                                                </div>
+                                            </div>
+                                            <div v-if="item.commands && item.code" class="my-4 border-t border-slate-800 w-full"></div>
+                                            <pre v-if="item.code" class="text-brand-300 whitespace-pre-wrap select-all leading-loose">{{ item.code }}</pre>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -633,6 +687,10 @@
                     ? "w-full text-left px-4 py-3 rounded-lg flex items-center bg-brand-500/10 text-brand-400 font-bold border border-brand-500/30 transition" 
                     : "w-full text-left px-4 py-3 rounded-lg flex items-center text-slate-500 hover:bg-dark-700 hover:text-white transition";
 
+                // --- REVISION / CHEAT SHEET MODE ---
+                const activeRevisionTopicId = ref(linuxData[0].id);
+                const activeRevisionTopic = computed(() => topics.value.find(t => t.id === activeRevisionTopicId.value));
+
                 // --- STUDY MODE (HARDCORE RECALL) ---
                 const activeStudyTopicId = ref(linuxData[0].id);
                 const currentStudyTasks = ref([]);
@@ -811,6 +869,8 @@
                 return {
                     topics, currentRoute, isExtremeMode, navClass,
                     stats, globalAccuracy, getTopicMastery, getTaskAccuracy, weakestTasks,
+                    // Revision Mode
+                    activeRevisionTopicId, activeRevisionTopic,
                     // Study Mode
                     activeStudyTopicId, currentStudyTasks, activeTaskIndex, taskRefs, validateTask, resetTask, setActiveTask, getStatusColor, getStatusIcon,
                     // Speed Drill
