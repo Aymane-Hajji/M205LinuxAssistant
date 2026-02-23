@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linux Server - Elite Memorization Engine</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { colors: { brand: { 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7' }, dark: { 900: '#0a0f18', 800: '#111827', 700: '#1f2937' }, console: '#050505' } } }
+        }
+    </script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+        [v-cloak] { display: none; }
+        
+        .crt-scanlines {
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none; position: fixed; inset: 0; z-index: 50; opacity: 0.2;
+        }
+
+        .input-terminal {
+            background-color: #050505; color: #33ff00; font-family: monospace;
+            border: 1px solid #374151; outline: none; transition: all 0.2s;
+        }
+        .input-terminal:focus { border-color: #0ea5e9; box-shadow: 0 0 10px rgba(14, 165, 233, 0.3); }
+        .input-terminal.correct { border-color: #22c55e; color: #22c55e; box-shadow: 0 0 10px rgba(34, 197, 94, 0.3); }
+        .input-terminal.typo { border-color: #eab308; color: #eab308; box-shadow: 0 0 10px rgba(234, 179, 8, 0.3); }
+        .input-terminal.wrong { border-color: #ef4444; color: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-dark-900 text-slate-800 dark:text-slate-200 font-sans h-screen flex overflow-hidden selection:bg-brand-500 selection:text-white">
+    <div id="app" v-cloak class="flex w-full h-full relative" @keydown="handleGlobalKeydown">
+        <div class="crt-scanlines"></div>
+
+        <!-- SIDEBAR -->
+        <aside class="w-20 md:w-72 bg-white dark:bg-dark-800 flex flex-col h-full shadow-2xl z-20 border-r border-slate-200 dark:border-slate-700 transition-all">
+            <div class="p-4 md:p-6 border-b border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-3">
+                    <i class="ph-fill ph-cpu text-3xl text-brand-500"></i>
+                    <div class="hidden md:block">
+                        <h1 class="text-lg font-black tracking-tight text-white leading-none uppercase">Neuro-Engine</h1>
+                        <span class="text-xs text-brand-500 font-mono tracking-widest">EXAM PREP V4.0</span>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-4 px-2 space-y-2">
+                <button @click="currentRoute = 'dashboard'" :class="navClass('dashboard')">
+                    <i class="ph ph-chart-polar text-xl md:mr-3"></i><span class="hidden md:block text-sm font-bold">Telemetry</span>
+                </button>
+                <button @click="currentRoute = 'study'" :class="navClass('study')">
+                    <i class="ph ph-brain text-xl md:mr-3"></i><span class="hidden md:block text-sm font-bold">Hardcore Recall</span>
+                </button>
+                <button @click="startDailyDrill" :class="navClass('drill')">
+                    <i class="ph ph-timer text-xl md:mr-3"></i><span class="hidden md:block text-sm font-bold">Speed Drill</span>
+                </button>
+                <button @click="currentRoute = 'flow'" :class="navClass('flow')">
+                    <i class="ph ph-git-merge text-xl md:mr-3"></i><span class="hidden md:block text-sm font-bold">Full Flow Config</span>
+                </button>
+
+                <div class="mt-8 px-4 hidden md:block">
+                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Topic Mastery</h3>
+                    <div v-for="topic in topics" :key="topic.id" class="mb-3">
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-300 truncate w-3/4">{{ topic.title }}</span>
+                            <span class="font-mono text-brand-400">{{ getTopicMastery(topic.id) }}%</span>
+                        </div>
+                        <div class="h-1 w-full bg-slate-700 rounded-full overflow-hidden">
+                            <div class="h-full bg-brand-500 transition-all duration-500" :style="`width: ${getTopicMastery(topic.id)}%`"></div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            
+            <div class="p-4 border-t border-slate-700 hidden md:block">
+                <div class="text-xs text-slate-400 font-mono mb-2">Shortcuts:</div>
+                <div class="grid grid-cols-2 gap-2 text-[10px] text-slate-500 font-mono">
+                    <div><kbd class="bg-slate-700 px-1 rounded text-slate-300">ENTER</kbd> Validate</div>
+                    <div><kbd class="bg-slate-700 px-1 rounded text-slate-300">↑/↓</kbd> Navigate</div>
+                    <div><kbd class="bg-slate-700 px-1 rounded text-slate-300">N</kbd> Next</div>
+                    <div><kbd class="bg-slate-700 px-1 rounded text-slate-300">R</kbd> Retry</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 flex flex-col h-full overflow-hidden relative bg-dark-900">
+            
+            <!-- TOP CONTROL PANEL -->
+            <header class="bg-dark-800 border-b border-slate-700 p-4 flex justify-between items-center z-10 shrink-0">
+                <div class="flex items-center gap-4">
+                    <h2 class="text-lg font-black uppercase tracking-wider text-white">
+                        <span v-if="currentRoute==='dashboard'">Command Center</span>
+                        <span v-if="currentRoute==='study'">Active Recall Matrix</span>
+                        <span v-if="currentRoute==='drill'">Timed Combat Drill</span>
+                        <span v-if="currentRoute==='flow'">Sequential Configuration</span>
+                    </h2>
+                </div>
+                <div class="flex items-center gap-4">
+                    <label class="flex items-center gap-2 cursor-pointer" v-if="currentRoute==='study'">
+                        <span class="text-xs font-bold uppercase" :class="isExtremeMode ? 'text-red-500' : 'text-slate-500'">Extreme Mode</span>
+                        <input type="checkbox" v-model="isExtremeMode" class="hidden">
+                        <div class="w-8 h-4 bg-slate-700 rounded-full relative transition">
+                            <div class="absolute w-4 h-4 rounded-full bg-white transition-transform" :class="isExtremeMode ? 'translate-x-4 bg-red-500' : 'translate-x-0'"></div>
+                        </div>
+                    </label>
+                    <div class="text-xs font-mono text-slate-400 bg-dark-700 px-3 py-1 rounded border border-slate-600">
+                        Accuracy: <span class="text-brand-400 font-bold">{{ globalAccuracy }}%</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- ROUTES -->
+            <div class="flex-1 overflow-y-auto p-6 md:p-8 scroll-smooth" ref="scrollContainer">
+                <div class="max-w-5xl mx-auto space-y-8 pb-32">
+
+                    <!-- DASHBOARD -->
+                    <div v-if="currentRoute === 'dashboard'" class="animate-fade-in space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-dark-800 p-6 rounded-xl border border-slate-700 shadow-lg">
+                                <i class="ph-duotone ph-target text-3xl text-brand-500 mb-2"></i>
+                                <div class="text-slate-400 text-xs font-bold uppercase mb-1">Total Validations</div>
+                                <div class="text-3xl font-black text-white">{{ stats.totalAttempts }}</div>
+                            </div>
+                            <div class="bg-dark-800 p-6 rounded-xl border border-slate-700 shadow-lg">
+                                <i class="ph-duotone ph-check-circle text-3xl text-green-500 mb-2"></i>
+                                <div class="text-slate-400 text-xs font-bold uppercase mb-1">Perfect Hits</div>
+                                <div class="text-3xl font-black text-white">{{ stats.hits }}</div>
+                            </div>
+                            <button @click="startDailyDrill" class="bg-brand-600 hover:bg-brand-500 p-6 rounded-xl border border-brand-500 shadow-lg shadow-brand-600/20 text-left transition group">
+                                <i class="ph-duotone ph-lightning text-3xl text-white mb-2 group-hover:scale-110 transition"></i>
+                                <div class="text-brand-200 text-xs font-bold uppercase mb-1">Initialize</div>
+                                <div class="text-2xl font-black text-white">Daily Drill (20Q)</div>
+                            </button>
+                        </div>
+
+                        <!-- Mistake Tracking Engine -->
+                        <div class="bg-dark-800 rounded-xl border border-slate-700 p-6 shadow-lg">
+                            <h3 class="text-lg font-black text-white mb-4 flex items-center gap-2">
+                                <i class="ph-fill ph-warning-circle text-red-500"></i> Weak Points Dashboard
+                            </h3>
+                            <div class="space-y-3">
+                                <div v-for="(task, idx) in weakestTasks" :key="idx" class="flex flex-col md:flex-row md:items-center justify-between p-4 bg-dark-900 rounded border border-slate-700 gap-4">
+                                    <div class="flex-1">
+                                        <div class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">{{ task.topicTitle }} - {{ task.type }}</div>
+                                        <div class="text-sm text-slate-300">{{ task.prompt }}</div>
+                                    </div>
+                                    <div class="flex items-center gap-4 w-full md:w-auto">
+                                        <div class="w-full md:w-32 h-2 bg-slate-700 rounded-full overflow-hidden">
+                                            <div class="h-full bg-red-500" :style="`width: ${task.accuracy}%`"></div>
+                                        </div>
+                                        <span class="text-xs font-mono text-red-400 font-bold w-12 text-right">{{ task.accuracy }}%</span>
+                                    </div>
+                                </div>
+                                <div v-if="weakestTasks.length === 0" class="text-sm text-slate-500 font-mono italic">
+                                    Insufficient data. Engage in combat drills to map neural weaknesses.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STUDY / HARDCORE RECALL MODE -->
+                    <div v-if="currentRoute === 'study'" class="animate-fade-in space-y-8">
+                        
+                        <!-- Topic Selector -->
+                        <div class="flex overflow-x-auto gap-2 pb-2">
+                            <button v-for="topic in topics" :key="topic.id" 
+                                @click="activeStudyTopicId = topic.id"
+                                class="px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition border"
+                                :class="activeStudyTopicId === topic.id ? 'bg-brand-600 border-brand-500 text-white' : 'bg-dark-800 border-slate-700 text-slate-400 hover:text-white'">
+                                {{ topic.title }}
+                            </button>
+                        </div>
+
+                        <!-- Active Recall Cards -->
+                        <div class="space-y-6">
+                            <div v-for="(task, idx) in currentStudyTasks" :key="task.id" 
+                                class="bg-dark-800 rounded-xl border transition-all duration-300 overflow-hidden shadow-lg"
+                                :class="{'ring-2 ring-brand-500': activeTaskIndex === idx, 'border-slate-700': !task.status, 'border-green-500': task.status==='correct', 'border-yellow-500': task.status==='typo', 'border-red-500': task.status==='wrong'}">
+                                
+                                <div class="p-5 border-b border-slate-700/50 flex gap-3 cursor-pointer" @click="setActiveTask(idx)">
+                                    <div class="mt-1" :class="getStatusColor(task.status)">
+                                        <i class="ph-fill text-xl" :class="getStatusIcon(task.status)"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="text-xs font-bold uppercase text-slate-500 mb-1 flex justify-between">
+                                            <span>Target: {{ task.type }}</span>
+                                            <span class="font-mono">{{ getTaskAccuracy(task.id) }}% Acc</span>
+                                        </div>
+                                        <p class="text-slate-200 font-medium leading-relaxed" v-html="task.prompt"></p>
+                                    </div>
+                                </div>
+                                
+                                <div class="p-5 bg-console flex flex-col gap-3">
+                                    <textarea 
+                                        :ref="el => { if(el) taskRefs[idx] = el }"
+                                        v-model="task.userAnswer" 
+                                        :disabled="task.status === 'correct'"
+                                        placeholder="> type answer here..."
+                                        class="input-terminal w-full p-3 rounded text-sm resize-none min-h-[80px]"
+                                        :class="task.status"
+                                        spellcheck="false"
+                                        @focus="activeTaskIndex = idx"
+                                    ></textarea>
+                                    
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-[10px] text-slate-500 font-mono uppercase">Ctrl+Enter or Enter to Validate</span>
+                                        <div class="flex gap-2">
+                                            <button v-if="task.status" @click="resetTask(task)" class="px-3 py-1 text-xs font-bold text-slate-400 hover:text-white border border-slate-600 rounded bg-dark-700">Retry (R)</button>
+                                            <button v-if="task.status !== 'correct'" @click="validateTask(task)" class="px-4 py-1 text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 rounded border border-brand-500 shadow-lg">Verify</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Feedback UI -->
+                                    <div v-if="task.status && task.status !== 'correct'" class="mt-2 p-3 rounded border font-mono text-xs whitespace-pre-wrap"
+                                        :class="task.status === 'typo' ? 'bg-yellow-900/20 border-yellow-700/50 text-yellow-300' : 'bg-red-900/20 border-red-700/50 text-red-300'">
+                                        <div class="font-bold mb-1 uppercase text-[10px]">{{ task.status === 'typo' ? 'Minor Typo Detected. Expected:' : 'Critical Failure. Expected:' }}</div>
+                                        {{ task.expected }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SPEED DRILL -->
+                    <div v-if="currentRoute === 'drill'" class="animate-fade-in flex flex-col items-center justify-center min-h-[60vh]">
+                        <div v-if="!drillActive && drillQueue.length === 0" class="text-center">
+                            <i class="ph-duotone ph-timer text-6xl text-brand-500 mb-4"></i>
+                            <h2 class="text-3xl font-black text-white mb-2">Speed Drill Mode</h2>
+                            <p class="text-slate-400 mb-8 max-w-md">20 random questions. 15 seconds per question. Immediate validation. No mercy.</p>
+                            <button @click="startDailyDrill" class="px-8 py-3 bg-brand-600 hover:bg-brand-500 text-white font-black text-lg rounded-xl shadow-[0_0_20px_rgba(14,165,233,0.4)]">Commence Drill</button>
+                        </div>
+
+                        <div v-else-if="drillActive" class="w-full max-w-3xl">
+                            <div class="flex justify-between items-end mb-4">
+                                <div class="text-brand-400 font-mono text-sm font-bold">Question {{ 20 - drillQueue.length + 1 }} / 20</div>
+                                <div class="text-3xl font-black font-mono" :class="drillTimer < 5 ? 'text-red-500 animate-pulse' : 'text-white'">00:{{ String(drillTimer).padStart(2, '0') }}</div>
+                            </div>
+                            
+                            <!-- Timer Bar -->
+                            <div class="h-2 w-full bg-slate-800 rounded-full overflow-hidden mb-8">
+                                <div class="h-full transition-all duration-1000 linear" :class="drillTimer < 5 ? 'bg-red-500' : 'bg-brand-500'" :style="`width: ${(drillTimer / 15) * 100}%`"></div>
+                            </div>
+
+                            <div class="bg-dark-800 p-8 rounded-2xl border border-slate-700 shadow-2xl relative overflow-hidden">
+                                <div class="text-xs font-bold uppercase text-slate-500 mb-2">{{ activeDrillTask.topicTitle }} | Target: {{ activeDrillTask.type }}</div>
+                                <h3 class="text-xl text-white font-medium mb-6 leading-relaxed" v-html="activeDrillTask.prompt"></h3>
+                                
+                                <textarea 
+                                    ref="drillInput"
+                                    v-model="activeDrillTask.userAnswer" 
+                                    @keydown.enter.prevent="submitDrillAnswer"
+                                    placeholder="> Answer here and press Enter..."
+                                    class="input-terminal w-full p-4 rounded-xl text-base resize-none min-h-[120px]"
+                                    :class="drillFeedbackStatus"
+                                    spellcheck="false"
+                                    :disabled="drillFeedbackStatus !== ''"
+                                ></textarea>
+
+                                <div v-if="drillFeedbackStatus" class="mt-4 p-4 rounded-lg font-mono text-sm whitespace-pre-wrap border animate-fade-in"
+                                    :class="drillFeedbackStatus === 'correct' ? 'bg-green-900/20 border-green-700/50 text-green-400' : (drillFeedbackStatus === 'typo' ? 'bg-yellow-900/20 border-yellow-700/50 text-yellow-400' : 'bg-red-900/20 border-red-700/50 text-red-400')">
+                                    <div class="font-bold mb-1 uppercase text-[10px]">{{ drillFeedbackStatus === 'correct' ? 'VALIDATED' : 'EXPECTED:' }}</div>
+                                    {{ drillFeedbackStatus === 'correct' ? 'Perfect Match.' : activeDrillTask.expected }}
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 flex justify-between items-center">
+                                <div class="text-slate-400 font-mono text-sm">Score: <span class="text-white font-bold">{{ drillScore }}</span></div>
+                                <button v-if="drillFeedbackStatus" @click="nextDrillQuestion" class="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-lg uppercase tracking-wider text-sm transition focus:ring focus:ring-slate-500">Next (N)</button>
+                            </div>
+                        </div>
+
+                        <!-- Drill Results -->
+                        <div v-if="!drillActive && drillQueue.length === 0 && drillScore > 0" class="text-center w-full max-w-md">
+                            <h2 class="text-4xl font-black text-white mb-2">Drill Complete</h2>
+                            <div class="bg-dark-800 p-8 rounded-2xl border border-slate-700 my-8">
+                                <div class="text-6xl font-black mb-2" :class="drillAccuracy >= 80 ? 'text-green-500' : (drillAccuracy >= 50 ? 'text-yellow-500' : 'text-red-500')">
+                                    {{ drillAccuracy }}%
+                                </div>
+                                <div class="text-slate-400 font-mono text-sm uppercase">Final Accuracy</div>
+                            </div>
+                            <button @click="startDailyDrill" class="w-full px-6 py-3 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-lg uppercase tracking-wider transition">Run Again</button>
+                        </div>
+                    </div>
+
+                    <!-- FULL FLOW MEMORY MODE -->
+                    <div v-if="currentRoute === 'flow'" class="animate-fade-in space-y-8">
+                        <header class="mb-4">
+                            <p class="text-slate-400 text-sm">Prove your mastery by writing the complete configuration sequence from zero. No skipping.</p>
+                        </header>
+
+                        <!-- Topic Selector -->
+                        <div class="flex overflow-x-auto gap-2 pb-2">
+                            <button v-for="topic in topics" :key="'flow_'+topic.id" 
+                                @click="startFlow(topic.id)"
+                                class="px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition border"
+                                :class="activeFlowTopicId === topic.id ? 'bg-brand-600 border-brand-500 text-white' : 'bg-dark-800 border-slate-700 text-slate-400 hover:text-white'">
+                                {{ topic.title }}
+                            </button>
+                        </div>
+
+                        <div v-if="activeFlowTopicId" class="relative pl-6 border-l-2 border-slate-700 space-y-8 pb-12">
+                            <div v-for="(task, idx) in flowTasks" :key="'ft_'+idx" class="relative">
+                                <!-- Node Dot -->
+                                <div class="absolute -left-[35px] top-4 w-6 h-6 rounded-full border-4 flex items-center justify-center transition-colors"
+                                    :class="getFlowDotClass(task.status, idx)">
+                                    <i v-if="task.status === 'correct'" class="ph-bold ph-check text-green-500 text-xs"></i>
+                                    <span v-else-if="idx === flowCurrentIndex" class="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
+                                </div>
+
+                                <div class="bg-dark-800 rounded-xl border p-5 transition-all shadow-md"
+                                    :class="getFlowCardClass(task.status, idx)">
+                                    
+                                    <div class="text-xs font-bold uppercase text-slate-500 mb-2">Step {{ idx + 1 }} : {{ task.type }}</div>
+                                    <p class="text-white font-medium mb-4" :class="{'opacity-50': idx > flowCurrentIndex}">{{ task.prompt }}</p>
+
+                                    <div v-if="idx <= flowCurrentIndex" class="space-y-3">
+                                        <textarea 
+                                            :ref="el => { if(el && idx === flowCurrentIndex) flowInputRef = el }"
+                                            v-model="task.userAnswer" 
+                                            :disabled="task.status === 'correct'"
+                                            @keydown.enter.prevent="idx === flowCurrentIndex ? validateFlowTask(task, idx) : null"
+                                            placeholder="> Execute sequence..."
+                                            class="input-terminal w-full p-3 rounded text-sm resize-none min-h-[60px]"
+                                            :class="task.status"
+                                            spellcheck="false"
+                                        ></textarea>
+                                        
+                                        <div v-if="task.status && task.status !== 'correct'" class="p-3 rounded border font-mono text-xs whitespace-pre-wrap bg-red-900/20 border-red-700/50 text-red-300">
+                                            <div class="font-bold mb-1 uppercase text-[10px]">Sequence Break. Expected:</div>
+                                            {{ task.expected }}
+                                        </div>
+                                        
+                                        <div v-if="idx === flowCurrentIndex" class="flex justify-end gap-2">
+                                            <button @click="resetFlowTask(task)" class="px-3 py-1 text-xs font-bold text-slate-400 bg-dark-700 rounded border border-slate-600 hover:text-white">Retry (R)</button>
+                                            <button @click="validateFlowTask(task, idx)" class="px-4 py-1 text-xs font-bold text-white bg-brand-600 rounded border border-brand-500 shadow-lg hover:bg-brand-500">Commit</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-if="flowTasks.length > 0 && flowCurrentIndex >= flowTasks.length" class="bg-green-900/20 border border-green-700 p-8 rounded-xl text-center shadow-[0_0_30px_rgba(34,197,94,0.2)]">
+                                <i class="ph-duotone ph-shield-check text-6xl text-green-500 mb-4"></i>
+                                <h3 class="text-2xl font-black text-white">Sequence Mastery Confirmed</h3>
+                                <p class="text-green-400 font-mono text-sm mt-2">All configuration steps deployed successfully.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted, watch, nextTick } = Vue;
+
+        // RAW PDF DATA PRESERVED EXACTLY AS PROVIDED
+        const linuxData = [
+            {
+                id: 'dns_master', title: "1. Serveur DNS (Master)",
+                sections: [
+                    { heading: "Installation et Démarrage", items: [
+                        { text: "Installation de bind.", commands: ["dnf install bind"] },
+                        { text: "Démarrage du service DNS.", commands: ["systemctl start named"] }
+                    ]},
+                    { heading: "Résolution Locale", items: [
+                        { text: "Configuration du DNS local.", path: "/etc/resolv.conf", code: "nameserver 127.0.0.1\nsearch ntic.ma" }
+                    ]},
+                    { heading: "Fichier de configuration principal", items: [
+                        { text: "Configuration de named.conf : Options, Directe, Inverse.", path: "/etc/named.conf", code: "options {\n    listen-on port 53 { 127.0.0.1; 192.168.10.252; };\n    allow-query { localhost; any; };\n};\n\nzone \"ntic.ma\" IN {\n    type master;\n    file \"direct.ntic.ma\";\n};\n\nzone \"10.168.192.in-addr.arpa\" IN {\n    type master;\n    file \"inverse.ntic.ma\";\n};" }
+                    ]},
+                    { heading: "Fichiers de Zone", items: [
+                        { text: "Zone Directe (direct.ntic.ma)", path: "/var/named/direct.ntic.ma", code: "@   IN  SOA srvdns1.ntic.ma. admin.ntic.ma. (\n        2026010101 ; Serial\n        3600       ; Refresh\n        1800       ; Retry\n        604800     ; Expire\n        86400 )    ; Minimum\n\n@       IN  NS      srvdns1.ntic.ma.\nsrvdns1 IN  A       192.168.10.252\nofppt   IN  CNAME   srvdns1.ntic.ma.\nPC1.ntic.ma IN A    192.168.10.10\nwww     IN  A       192.168.10.30\n@       IN  MX  10  mail.ntic.ma." },
+                        { text: "Zone Inverse (inverse.ntic.ma)", path: "/var/named/inverse.ntic.ma", code: "SOA record\n\n@   IN  NS  srvdns1.ntic.ma.\n252 IN  PTR srvdns1.ntic.ma.\n90  IN  PTR PC1.ntic.ma." }
+                    ]},
+                    { heading: "Vérifications", items: [
+                        { text: "Ajouter le service DNS au firewall de façon permanente.", commands: ["firewall-cmd --permanent --add-service=dns"] },
+                        { text: "Vérifier la syntaxe des configurations.", commands: ["named-checkconf", "named-checkzone ntic.ma /var/named/direct.ntic.ma", "named-checkzone 10.168.192.in-addr.arpa /var/named/inverse.ntic.ma"] }
+                    ]}
+                ]
+            },
+            {
+                id: 'dns_slave', title: "2. DNS Esclave et DDNS",
+                sections: [
+                    { heading: "Réseau Slave", items: [
+                        { text: "Modification de l'interface ens160 via nmcli.", commands: ["nmcli con modify type ethernet ifname ens160 ipv4.addresses 192.168.10.5/24 ipv4.gateway 192.168.10.1 ipv4.dns \"192.168.10.252, 127.0.0.1\""] }
+                    ]},
+                    { heading: "Résolution Slave", items: [
+                        { text: "Configuration du resolv.conf du slave.", path: "/etc/resolv.conf", code: "nameserver 192.168.10.252\nnameserver 127.0.0.1\nsearch ntic.ma" }
+                    ]},
+                    { heading: "Configuration du DNS Esclave", items: [
+                        { text: "Déclaration des zones slaves dans le fichier principal.", path: "/etc/named.conf", code: "zone \"ntic.ma\" IN {\n    type slave;\n    file \"slaves/direct.ntic.ma.slave\";\n    masters { 192.168.10.252; };\n};\n\nzone \"10.168.192.in-addr.arpa\" IN {\n    type slave;\n    file \"slaves/inverse.ntic.ma.slave\";\n    masters { 192.168.10.252; };\n};" }
+                    ]},
+                    { heading: "DDNS", items: [
+                        { text: "Côté DNS: Ajout d'options dans named.conf.", path: "/etc/named.conf", code: "allow-update { any; }; // ou localhost\nrecursion yes;" },
+                        { text: "Côté DHCP: Activation du DDNS et spécification des zones autoritaires.", path: "/etc/dhcp/dhcpd.conf", code: "authoritative;\nddns-updates on;\nddns-update-style interim;\ndeny client-updates;\n\nddns-domainname \"srvdns1.ntic.ma\";\nddns-rev-domainname \"10.168.192.in-addr.arpa\";\n\nzone srvdns1.ntic.ma. {\n    primary 192.168.10.252;\n}\n\nzone 10.168.192.in-addr.arpa. {\n    primary 192.168.10.252;\n}" }
+                    ]}
+                ]
+            },
+            {
+                id: 'dhcp', title: "3. Serveur DHCP & Relais",
+                sections: [
+                    { heading: "Serveur DHCP", items: [
+                        { text: "Installation de dhcp-server.", commands: ["dnf install dhcp-server"] },
+                        { text: "Configuration du subnet et de la plage d'IP.", path: "/etc/dhcp/dhcpd.conf", code: "subnet 192.168.10.0 netmask 255.255.255.0 {\n    range 192.168.10.10 192.168.10.20;\n    option routers 192.168.10.1;\n    option domain-name-servers 8.8.8.8;\n    option domain-name \"ntic.local\";\n    default-lease-time 2400;\n}" },
+                        { text: "Réservation DHCP par MAC.", code: "host client {\n    hardware ethernet [MAC@];\n    fixed-address [@Reserved];\n}" }
+                    ]},
+                    { heading: "DHCP-Relay", items: [
+                        { text: "Fichier de configuration du relais.", path: "/etc/sysconfig/dhcrelay", code: "INTERFACES=\"[interface]\"\nDHCPSERVERS=\"[@DHCP Server]\"" },
+                        { text: "Service associé au relais DHCP.", commands: ["cp /lib/systemd/system/dhcrelay.service /etc/systemd/system/"] },
+                        { text: "Activation du routage IPv4 (ip_forward).", path: "/proc/sys/net/ipv4/ip_forward", commands: ["echo 1 > /proc/sys/net/ipv4/ip_forward"] }
+                    ]}
+                ]
+            },
+            {
+                id: 'ssh', title: "4. SSH & RSA",
+                sections: [
+                    { heading: "Serveur SSH", items: [
+                        { text: "Installation du paquet openssh.", commands: ["dnf install openssh"] },
+                        { text: "Configuration SSH (Port 22 par défaut).", path: "/etc/ssh/sshd_config", code: "ListenAddress 192.168.10.10\nPermitRootLogin yes" }
+                    ]},
+                    { heading: "Commandes Clientes", items: [
+                        { text: "Se connecter en SSH.", commands: ["ssh root@192.168.10.10"] },
+                        { text: "SCP (Télécharger : Serveur vers Client).", commands: ["scp root@192.168.10.10:/root/test_download.txt ."] },
+                        { text: "SCP (Envoyer : Client vers Serveur).", commands: ["scp /home/client1/test_send.txt root@192.168.10.10:/root/"] }
+                    ]},
+                    { heading: "Authentification SSH + RSA", items: [
+                        { text: "Création de la paire de clés RSA 2048 bits.", commands: ["ssh-keygen -t rsa -b 2048 -C \"root@192.168.10.10\""] },
+                        { text: "Exporter la clé publique vers le serveur distant.", commands: ["ssh-copy-id -i ~/.ssh/id_rsa.pub root@192.168.10.10"] },
+                        { text: "Activer l'authentification par clés côté serveur.", path: "/etc/ssh/sshd_config", code: "PubkeyAuthentication yes\nAuthorizedKeysFile .ssh/authorized_keys" }
+                    ]}
+                ]
+            },
+            {
+                id: 'apache', title: "5. Serveur Web Apache",
+                sections: [
+                    { heading: "Installation et Dossiers", items: [
+                        { text: "Installation de httpd.", commands: ["dnf install httpd"] },
+                        { text: "Création des répertoires pour les logs et les racines HTML.", commands: ["mkdir -p /var/log/httpd/{afppt,ntic}", "mkdir -p /var/www/html/site{1,2}"] }
+                    ]},
+                    { heading: "Résolution locale (/etc/hosts)", items: [
+                        { text: "Fichier /etc/hosts pour faire pointer les noms locaux.", path: "/etc/hosts", code: "192.168.10.252 ntic.com\n192.168.10.252 www.ntic.com\n192.168.10.252 afppt.com\n192.168.10.252 www.afppt.com" }
+                    ]},
+                    { heading: "Fichiers Vhosts", items: [
+                        { text: "Exemple de configuration d'un VirtualHost pour afppt.", path: "/etc/httpd/conf.d/vhost1.conf", code: "<VirtualHost *:80>\n    ServerName afppt.com\n    ServerAlias www.afppt.com\n    ServerAdmin admin@ntic.ma\n    DocumentRoot /var/www/html/site1/\n    ErrorLog /var/log/httpd/afppt/error.log\n</VirtualHost>" }
+                    ]}
+                ]
+            },
+            {
+                id: 'postfix_nfs', title: "6. Postfix & NFS",
+                sections: [
+                    { heading: "Postfix", items: [
+                        { text: "Installation de Postfix.", commands: ["dnf install postfix"] },
+                        { text: "Configuration de main.cf.", path: "/etc/postfix/main.cf", code: "myhostname = srvdns1.ntic.ma\nmydomain = ntic.ma\nmyorigin = $mydomain\ninet_interfaces = all\nmynetworks = 192.168.10.0/24, 127.0.0.0/8\nhome_mailbox = Maildir/" }
+                    ]},
+                    { heading: "Serveur NFS", items: [
+                        { text: "Installation du paquet NFS Server et création du dossier.", commands: ["dnf install nfs-server", "mkdir /ID-Sharing"] },
+                        { text: "Exporter le dossier à travers le réseau.", path: "/etc/exports", code: "/ID-Sharing 192.168.10.0/24(rw)" },
+                        { text: "Appliquer les règles d'exports.", commands: ["exportfs -r"] }
+                    ]},
+                    { heading: "Client NFS", items: [
+                        { text: "Vérifier les exports disponibles sur le serveur (depuis client).", commands: ["showmount -e 192.168.10.5"] },
+                        { text: "Montage manuel.", commands: ["mkdir /IDData", "mount 192.168.10.5:/ID-Sharing /IDData"] },
+                        { text: "Montage persistant dans fstab.", path: "/etc/fstab", code: "192.168.10.5:/ID-Sharing /IDData nfs defaults 0 0" }
+                    ]}
+                ]
+            },
+            {
+                id: 'samba', title: "7. Samba (SMB/CIFS)",
+                sections: [
+                    { heading: "Utilisateurs et Groupes", items: [
+                        { text: "Création du groupe, de l'utilisateur, et ajout du mot de passe Samba.", commands: ["groupadd groups", "useradd ahmed -g groups", "smbpasswd -a ahmed"] }
+                    ]},
+                    { heading: "Serveur Samba", items: [
+                        { text: "Installation de Samba.", commands: ["dnf install samba"] },
+                        { text: "Configuration du fichier de partage.", path: "/etc/samba/smb.conf", code: "[PARTAGE_ID]\n    path = /id-data\n    writable = yes\n    valid users = ahmed\n    hosts allow = 192.168.10.0/24" }
+                    ]},
+                    { heading: "Client Linux Samba", items: [
+                        { text: "Installation des paquets clients cifs.", commands: ["dnf install samba-client cifs-utils"] },
+                        { text: "Connexion en mode CLI interactif.", commands: ["smbclient //192.168.10.10/PARTAGE_ID -U ahmed"] },
+                        { text: "Montage local via cifs.", commands: ["mkdir /ID-REP", "mount -t cifs //192.168.10.10/PARTAGE_ID /ID-REP -o username=ahmed,password=[password]"] }
+                    ]}
+                ]
+            },
+            {
+                id: 'ftp_lvm', title: "8. FTP, Disques, Quotas & LVM",
+                sections: [
+                    { heading: "Serveur FTP (vsftpd)", items: [
+                        { text: "Installation et ajout des utilisateurs.", commands: ["dnf install vsftpd -y", "useradd userftp1", "useradd userftp2"] },
+                        { text: "Création d'un fichier public de test.", commands: ["echo \"fichier FTP public\" > /var/ftp/pub/FileFtp.txt"] },
+                        { text: "Configuration vsftpd.", path: "/etc/vsftpd/vsftpd.conf", code: "anonymous_enable=NO\nlocal_enable=YES\nwrite_enable=YES\nchroot_local_user=YES\nftpd_banner=Bienvenue\nuserlist_enable=YES" },
+                        { text: "Ajouter userftp2 à la user_list.", commands: ["echo \"userftp2\" >> /etc/vsftpd/user_list"] },
+                        { text: "Test de connexion et téléchargement.", commands: ["ftp -u userftp1 192.168.10.10", "get fileserver", "mget *"] }
+                    ]},
+                    { heading: "Disques et Quotas", items: [
+                        { text: "Partitionnement et système de fichiers.", commands: ["fdisk /dev/sdb", "mkfs.ext4 /dev/sdb1", "tune2fs -m 1 /dev/sdb1"] },
+                        { text: "Commandes de gestion des Quotas.", commands: ["mkdir /mnt/data", "quotacheck -cum /mnt/data", "quotaon /mnt/data", "edquota -u userftp1"] },
+                        { text: "Montage avec support des quotas.", path: "/etc/fstab", code: "UUID=[UUID] /mnt/data ext4 defaults,usrquota,grpquota 0 0" },
+                        { text: "Appliquer le point de montage.", commands: ["mount -a", "mount -o remount /mnt/data"] }
+                    ]},
+                    { heading: "LVM", items: [
+                        { text: "Création Volume Physique (PV) et Groupe de Volumes (VG).", commands: ["pvcreate /dev/sdb2", "vgcreate vg-data /dev/sdb2"] },
+                        { text: "Création d'un Volume Logique (LV) de 500M.", commands: ["lvcreate -L 500M -n lv1 vg-data"] },
+                        { text: "Agrandissement (Extension) du LV de +300M.", commands: ["lvextend -L +300M /dev/vg-data/lv1"] }
+                    ]}
+                ]
+            }
+        ];
+
+        // MISTAKE TRACKING / LEVENSHTEIN ENGINE
+        function levenshtein(a, b) {
+            if(a.length === 0) return b.length;
+            if(b.length === 0) return a.length;
+            let matrix = [];
+            for(let i = 0; i <= b.length; i++) matrix[i] = [i];
+            for(let j = 0; j <= a.length; j++) matrix[0][j] = j;
+            for(let i = 1; i <= b.length; i++) {
+                for(let j = 1; j <= a.length; j++) {
+                    if(b.charAt(i-1) === a.charAt(j-1)) matrix[i][j] = matrix[i-1][j-1];
+                    else matrix[i][j] = Math.min(matrix[i-1][j-1] + 1, Math.min(matrix[i][j-1] + 1, matrix[i-1][j] + 1));
+                }
+            }
+            return matrix[b.length][a.length];
+        }
+
+        function evaluateMatch(input, expected, extreme) {
+            let i = input.trim().replace(/\r\n/g, '\n');
+            let e = expected.trim().replace(/\r\n/g, '\n');
+            if (extreme) return i === e ? 'correct' : 'wrong';
+            if (i === e) return 'correct';
+            
+            // Strip multiple spaces for comparison tolerance
+            i = i.replace(/\s+/g, ' ');
+            e = e.replace(/\s+/g, ' ');
+            if (i === e) return 'correct';
+
+            const dist = levenshtein(i, e);
+            const maxLen = Math.max(i.length, e.length);
+            const sim = maxLen === 0 ? 1 : 1 - (dist / maxLen);
+            
+            if (sim >= 0.90) return 'typo';
+            return 'wrong';
+        }
+
+        // PRE-PROCESS DATA INTO ATOMIC TASKS
+        let allTasks = [];
+        linuxData.forEach((topic, tIdx) => {
+            topic.sections.forEach((sec, sIdx) => {
+                sec.items.forEach((item, iIdx) => {
+                    const baseId = `${tIdx}_${sIdx}_${iIdx}`;
+                    if (item.commands) {
+                        allTasks.push({ id: `${baseId}_cmd`, topicId: topic.id, topicTitle: topic.title, sectionHeading: sec.heading, type: 'Command(s)', prompt: item.text, expected: item.commands.join('\n') });
+                    }
+                    if (item.path) {
+                        allTasks.push({ id: `${baseId}_path`, topicId: topic.id, topicTitle: topic.title, sectionHeading: sec.heading, type: 'File Path', prompt: `Emplacement pour : ${item.text}`, expected: item.path });
+                    }
+                    if (item.code) {
+                        allTasks.push({ id: `${baseId}_code`, topicId: topic.id, topicTitle: topic.title, sectionHeading: sec.heading, type: 'Configuration Block', prompt: `Contenu / Directives pour : ${item.text}`, expected: item.code });
+                    }
+                });
+            });
+        });
+
+        const app = createApp({
+            setup() {
+                // CORE STATE
+                const topics = ref(linuxData);
+                const currentRoute = ref('dashboard');
+                const isExtremeMode = ref(false);
+                
+                // TRACKING & PERSISTENCE
+                const stats = ref({ totalAttempts: 0, hits: 0, itemStats: {} });
+                const loadStats = () => {
+                    const s = localStorage.getItem('linux_neuro_engine_stats');
+                    if (s) {
+                        try { stats.value = JSON.parse(s); } catch(e){}
+                    }
+                };
+                const saveStats = () => localStorage.setItem('linux_neuro_engine_stats', JSON.stringify(stats.value));
+
+                const globalAccuracy = computed(() => stats.value.totalAttempts > 0 ? Math.round((stats.value.hits / stats.value.totalAttempts) * 100) : 0);
+                
+                const getTaskAccuracy = (taskId) => {
+                    const s = stats.value.itemStats[taskId];
+                    if(!s || s.attempts === 0) return 0;
+                    return Math.round((s.hits / s.attempts) * 100);
+                };
+
+                const getTopicMastery = (topicId) => {
+                    let hits = 0, attempts = 0;
+                    const tasks = allTasks.filter(t => t.topicId === topicId);
+                    tasks.forEach(t => {
+                        const s = stats.value.itemStats[t.id];
+                        if (s) { hits += s.hits; attempts += s.attempts; }
+                    });
+                    return attempts === 0 ? 0 : Math.round((hits / attempts) * 100);
+                };
+
+                const weakestTasks = computed(() => {
+                    let map = [];
+                    allTasks.forEach(t => {
+                        const s = stats.value.itemStats[t.id];
+                        if (s && s.attempts > 0) {
+                            map.push({ ...t, accuracy: Math.round((s.hits / s.attempts) * 100), attempts: s.attempts });
+                        }
+                    });
+                    // Filter out 100% correct items and sort ascending by accuracy
+                    return map.filter(t => t.accuracy < 100).sort((a, b) => a.accuracy - b.accuracy || b.attempts - a.attempts).slice(0, 5);
+                });
+
+                const recordAttempt = (taskId, isHit) => {
+                    stats.value.totalAttempts++;
+                    if (isHit) stats.value.hits++;
+                    if (!stats.value.itemStats[taskId]) stats.value.itemStats[taskId] = { hits: 0, attempts: 0 };
+                    stats.value.itemStats[taskId].attempts++;
+                    if (isHit) stats.value.itemStats[taskId].hits++;
+                    saveStats();
+                };
+
+                // NAV CLASS
+                const navClass = (route) => currentRoute.value === route 
+                    ? "w-full text-left px-4 py-3 rounded-lg flex items-center bg-brand-500/10 text-brand-400 font-bold border border-brand-500/30 transition" 
+                    : "w-full text-left px-4 py-3 rounded-lg flex items-center text-slate-500 hover:bg-dark-700 hover:text-white transition";
+
+                // --- STUDY MODE (HARDCORE RECALL) ---
+                const activeStudyTopicId = ref(linuxData[0].id);
+                const currentStudyTasks = ref([]);
+                const activeTaskIndex = ref(-1);
+                const taskRefs = ref([]);
+
+                watch(activeStudyTopicId, (newId) => {
+                    currentStudyTasks.value = allTasks.filter(t => t.topicId === newId).map(t => ({...t, userAnswer: '', status: ''}));
+                    activeTaskIndex.value = 0;
+                    taskRefs.value = [];
+                    nextTick(() => focusActiveTask());
+                }, { immediate: true });
+
+                const validateTask = (task) => {
+                    if (task.status === 'correct') return;
+                    task.status = evaluateMatch(task.userAnswer || '', task.expected, isExtremeMode.value);
+                    recordAttempt(task.id, task.status === 'correct');
+                    if (task.status === 'correct') advanceFocus();
+                };
+
+                const resetTask = (task) => { task.userAnswer = ''; task.status = ''; };
+                const focusActiveTask = () => { if(taskRefs.value[activeTaskIndex.value]) taskRefs.value[activeTaskIndex.value].focus(); };
+                const advanceFocus = () => {
+                    if (activeTaskIndex.value < currentStudyTasks.value.length - 1) {
+                        activeTaskIndex.value++;
+                        nextTick(() => focusActiveTask());
+                    }
+                };
+                const setActiveTask = (idx) => { activeTaskIndex.value = idx; focusActiveTask(); };
+
+                const getStatusColor = (status) => {
+                    if (status === 'correct') return 'text-green-500';
+                    if (status === 'typo') return 'text-yellow-500';
+                    if (status === 'wrong') return 'text-red-500';
+                    return 'text-brand-500';
+                };
+                const getStatusIcon = (status) => {
+                    if (status === 'correct') return 'ph-check-circle';
+                    if (status === 'typo') return 'ph-warning';
+                    if (status === 'wrong') return 'ph-x-circle';
+                    return 'ph-terminal';
+                };
+
+                // --- SPEED DRILL MODE ---
+                const drillActive = ref(false);
+                const drillQueue = ref([]);
+                const activeDrillTask = ref(null);
+                const drillTimer = ref(0);
+                const drillScore = ref(0);
+                const drillTotal = ref(0);
+                const drillFeedbackStatus = ref('');
+                let drillInterval = null;
+                const drillInput = ref(null);
+                const drillAccuracy = computed(() => drillTotal.value > 0 ? Math.round((drillScore.value / drillTotal.value)*100) : 0);
+
+                const startDailyDrill = () => {
+                    currentRoute.value = 'drill';
+                    // Get 20 random tasks
+                    const shuffled = [...allTasks].sort(() => 0.5 - Math.random());
+                    drillQueue.value = shuffled.slice(0, 20).map(t => ({...t, userAnswer: ''}));
+                    drillScore.value = 0;
+                    drillTotal.value = drillQueue.length;
+                    drillActive.value = true;
+                    loadNextDrill();
+                };
+
+                const loadNextDrill = () => {
+                    if (drillQueue.value.length === 0) {
+                        drillActive.value = false;
+                        clearInterval(drillInterval);
+                        return;
+                    }
+                    activeDrillTask.value = drillQueue.value[0];
+                    drillFeedbackStatus.value = '';
+                    drillTimer.value = 15; // 15 seconds per question
+                    clearInterval(drillInterval);
+                    drillInterval = setInterval(() => {
+                        drillTimer.value--;
+                        if (drillTimer.value <= 0) {
+                            clearInterval(drillInterval);
+                            evaluateDrill(true); // timeout
+                        }
+                    }, 1000);
+                    nextTick(() => { if(drillInput.value) drillInput.value.focus(); });
+                };
+
+                const submitDrillAnswer = () => {
+                    if (drillFeedbackStatus.value === '') evaluateDrill(false);
+                };
+
+                const evaluateDrill = (isTimeout) => {
+                    clearInterval(drillInterval);
+                    if (isTimeout) {
+                        drillFeedbackStatus.value = 'wrong';
+                        recordAttempt(activeDrillTask.value.id, false);
+                    } else {
+                        drillFeedbackStatus.value = evaluateMatch(activeDrillTask.value.userAnswer || '', activeDrillTask.value.expected, isExtremeMode.value);
+                        recordAttempt(activeDrillTask.value.id, drillFeedbackStatus.value === 'correct');
+                        if (drillFeedbackStatus.value === 'correct') {
+                            drillScore.value++;
+                            setTimeout(nextDrillQuestion, 800); // auto-advance on perfect
+                        }
+                    }
+                };
+
+                const nextDrillQuestion = () => {
+                    drillQueue.value.shift();
+                    loadNextDrill();
+                };
+
+                // --- FULL FLOW CONFIG MODE ---
+                const activeFlowTopicId = ref(null);
+                const flowTasks = ref([]);
+                const flowCurrentIndex = ref(0);
+                const flowInputRef = ref(null);
+
+                const startFlow = (topicId) => {
+                    activeFlowTopicId.value = topicId;
+                    flowTasks.value = allTasks.filter(t => t.topicId === topicId).map(t => ({...t, userAnswer: '', status: ''}));
+                    flowCurrentIndex.value = 0;
+                    nextTick(() => { if(flowInputRef.value) flowInputRef.value.focus(); });
+                };
+
+                const validateFlowTask = (task, idx) => {
+                    if (idx !== flowCurrentIndex.value) return;
+                    task.status = evaluateMatch(task.userAnswer || '', task.expected, isExtremeMode.value);
+                    recordAttempt(task.id, task.status === 'correct');
+                    if (task.status === 'correct') {
+                        flowCurrentIndex.value++;
+                        nextTick(() => { if(flowInputRef.value) flowInputRef.value.focus(); });
+                    }
+                };
+                
+                const resetFlowTask = (task) => { task.userAnswer = ''; task.status = ''; nextTick(() => { if(flowInputRef.value) flowInputRef.value.focus(); }); };
+
+                const getFlowDotClass = (status, idx) => {
+                    if (status === 'correct') return 'bg-dark-900 border-green-500';
+                    if (idx === flowCurrentIndex.value) return 'bg-dark-900 border-brand-500';
+                    return 'bg-dark-900 border-slate-700';
+                };
+                const getFlowCardClass = (status, idx) => {
+                    if (status === 'correct') return 'border-green-500/50 bg-green-900/10 opacity-75';
+                    if (idx === flowCurrentIndex.value) return 'border-brand-500 ring-1 ring-brand-500 shadow-[0_0_15px_rgba(14,165,233,0.2)]';
+                    if (idx > flowCurrentIndex.value) return 'border-slate-800 opacity-40 grayscale pointer-events-none';
+                    return 'border-slate-700';
+                };
+
+
+                // --- GLOBAL KEYBOARD NAV ---
+                const handleGlobalKeydown = (e) => {
+                    // Ignore if target is not body or div (to not hijack natural textarea typing unless specific keys)
+                    if (e.key === 'ArrowDown' && e.ctrlKey && currentRoute.value === 'study') {
+                        e.preventDefault();
+                        if (activeTaskIndex.value < currentStudyTasks.value.length - 1) setActiveTask(activeTaskIndex.value + 1);
+                    }
+                    if (e.key === 'ArrowUp' && e.ctrlKey && currentRoute.value === 'study') {
+                        e.preventDefault();
+                        if (activeTaskIndex.value > 0) setActiveTask(activeTaskIndex.value - 1);
+                    }
+                    if (e.key.toLowerCase() === 'n' && e.ctrlKey) {
+                        e.preventDefault();
+                        if (currentRoute.value === 'drill' && drillFeedbackStatus.value) nextDrillQuestion();
+                    }
+                    if (e.key.toLowerCase() === 'r' && e.ctrlKey) {
+                        e.preventDefault();
+                        if (currentRoute.value === 'study' && currentStudyTasks.value[activeTaskIndex.value]) resetTask(currentStudyTasks.value[activeTaskIndex.value]);
+                        if (currentRoute.value === 'flow' && flowTasks.value[flowCurrentIndex.value]) resetFlowTask(flowTasks.value[flowCurrentIndex.value]);
+                    }
+                    // Validation mapped inside inputs directly via @keydown.enter
+                };
+
+                onMounted(() => {
+                    loadStats();
+                });
+
+                return {
+                    topics, currentRoute, isExtremeMode, navClass,
+                    stats, globalAccuracy, getTopicMastery, getTaskAccuracy, weakestTasks,
+                    // Study Mode
+                    activeStudyTopicId, currentStudyTasks, activeTaskIndex, taskRefs, validateTask, resetTask, setActiveTask, getStatusColor, getStatusIcon,
+                    // Speed Drill
+                    drillActive, drillQueue, activeDrillTask, drillTimer, drillScore, drillFeedbackStatus, drillAccuracy, startDailyDrill, submitDrillAnswer, nextDrillQuestion, drillInput,
+                    // Flow Mode
+                    activeFlowTopicId, flowTasks, flowCurrentIndex, startFlow, validateFlowTask, resetFlowTask, flowInputRef, getFlowDotClass, getFlowCardClass,
+                    // Global
+                    handleGlobalKeydown
+                };
+            }
+        });
+        app.mount('#app');
+    </script>
+</body>
+</html>
