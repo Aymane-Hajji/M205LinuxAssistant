@@ -89,7 +89,7 @@
                 <div class="text-xs text-slate-400 font-mono mb-2">Shortcuts:</div>
                 <div class="grid grid-cols-2 gap-2 text-[10px] text-slate-500 font-mono">
                     <div><kbd class="bg-slate-700 px-1 rounded text-slate-300">ENTER</kbd> Validate</div>
-                    <div><kbd class="bg-slate-700 px-1 rounded text-slate-300">↑/↓</kbd> Navigate</div>
+                    <div><kbd class="bg-slate-700 px-1 rounded text-slate-300">SHIFT+ENT</kbd> New line</div>
                     <div><kbd class="bg-slate-700 px-1 rounded text-slate-300">N</kbd> Next</div>
                     <div><kbd class="bg-slate-700 px-1 rounded text-slate-300">R</kbd> Retry</div>
                 </div>
@@ -176,7 +176,7 @@
                     <!-- REVISION / CHEAT SHEET MODE -->
                     <div v-if="currentRoute === 'revision'" class="animate-fade-in space-y-8">
                         <header class="mb-4">
-                            <p class="text-slate-400 text-sm">Review all configuration paths, commands, and code blocks at your own pace without pressure.</p>
+                            <p class="text-slate-400 text-sm">Explications détaillées de chaque ligne de configuration. Révisez à votre rythme avant le combat.</p>
                         </header>
 
                         <!-- Topic Selector -->
@@ -208,14 +208,34 @@
                                         </div>
                                         
                                         <div v-if="item.commands || item.code" class="ml-6 bg-console rounded-lg p-4 border border-slate-700 font-mono text-xs overflow-x-auto shadow-inner">
-                                            <div v-if="item.commands" class="flex flex-col gap-1.5 text-green-400">
-                                                <div v-for="(cmd, cmdIdx) in item.commands" :key="cmdIdx" class="flex">
-                                                    <span class="text-slate-600 mr-2">$</span>
-                                                    <span class="select-all">{{ cmd }}</span>
+                                            
+                                            <!-- Commands -->
+                                            <div v-if="item.commands" class="flex flex-col gap-4 bg-dark-900/50 p-3 rounded">
+                                                <div v-for="(cmdObj, cmdIdx) in item.commands" :key="cmdIdx" class="flex flex-col">
+                                                    <div class="flex text-green-400">
+                                                        <span class="text-slate-600 mr-2 select-none">$</span>
+                                                        <span class="select-all font-bold">{{ cmdObj.cmd }}</span>
+                                                    </div>
+                                                    <div v-if="cmdObj.desc" class="flex mt-1">
+                                                        <span class="w-3 border-l border-b border-slate-700 rounded-bl mr-2 mb-1"></span>
+                                                        <span class="text-slate-400 italic text-[11px]">{{ cmdObj.desc }}</span>
+                                                    </div>
                                                 </div>
                                             </div>
+
                                             <div v-if="item.commands && item.code" class="my-4 border-t border-slate-800 w-full"></div>
-                                            <pre v-if="item.code" class="text-brand-300 whitespace-pre-wrap select-all leading-loose">{{ item.code }}</pre>
+                                            
+                                            <!-- Configuration Code Blocks -->
+                                            <div v-if="item.code" class="flex flex-col gap-2 p-3">
+                                                <div v-for="(codeObj, cIdx) in item.code" :key="cIdx" class="flex flex-col mb-1">
+                                                    <div class="text-brand-300 whitespace-pre-wrap select-all font-medium"><template v-if="codeObj.line === ''">&nbsp;</template>{{ codeObj.line }}</div>
+                                                    <div v-if="codeObj.desc" class="flex mt-1">
+                                                        <span class="w-3 border-l border-b border-slate-700 rounded-bl mr-2 mb-1"></span>
+                                                        <span class="text-slate-400 italic text-[11px]">{{ codeObj.desc }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                         </div>
                                     </div>
                                 </div>
@@ -269,7 +289,7 @@
                                     ></textarea>
                                     
                                     <div class="flex justify-between items-center">
-                                        <span class="text-[10px] text-slate-500 font-mono uppercase">Ctrl+Enter or Enter to Validate</span>
+                                        <span class="text-[10px] text-slate-500 font-mono uppercase">Enter to Validate, Shift+Enter for new line</span>
                                         <div class="flex gap-2">
                                             <button v-if="task.status" @click="resetTask(task)" class="px-3 py-1 text-xs font-bold text-slate-400 hover:text-white border border-slate-600 rounded bg-dark-700">Retry (R)</button>
                                             <button v-if="task.status !== 'correct'" @click="validateTask(task)" class="px-4 py-1 text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 rounded border border-brand-500 shadow-lg">Verify</button>
@@ -420,28 +440,66 @@
     <script>
         const { createApp, ref, computed, onMounted, watch, nextTick } = Vue;
 
-        // RAW PDF DATA PRESERVED EXACTLY AS PROVIDED
+        // RAW PDF DATA WITH ADDED EXPLANATORY COMMENTS FOR EACH COMMAND & CONFIG BLOCK
         const linuxData = [
             {
                 id: 'dns_master', title: "1. Serveur DNS (Master)",
                 sections: [
                     { heading: "Installation et Démarrage", items: [
-                        { text: "Installation de bind.", commands: ["dnf install bind"] },
-                        { text: "Démarrage du service DNS.", commands: ["systemctl start named"] }
+                        { text: "Installation de bind.", commands: [{cmd: "dnf install bind", desc: "Installe le paquet du serveur DNS (Bind9)"}] },
+                        { text: "Démarrage du service DNS.", commands: [{cmd: "systemctl start named", desc: "Démarre le service DNS"}] }
                     ]},
                     { heading: "Résolution Locale", items: [
-                        { text: "Configuration du DNS local.", path: "/etc/resolv.conf", code: "nameserver 127.0.0.1\nsearch ntic.ma" }
+                        { text: "Configuration du DNS local.", path: "/etc/resolv.conf", code: [
+                            { line: "nameserver 127.0.0.1", desc: "Définit le serveur DNS à interroger en priorité (boucle locale)" },
+                            { line: "search ntic.ma", desc: "Domaine de recherche par défaut pour compléter les noms courts" }
+                        ]}
                     ]},
                     { heading: "Fichier de configuration principal", items: [
-                        { text: "Configuration de named.conf : Options, Directe, Inverse.", path: "/etc/named.conf", code: "options {\n    listen-on port 53 { 127.0.0.1; 192.168.10.252; };\n    allow-query { localhost; any; };\n};\n\nzone \"ntic.ma\" IN {\n    type master;\n    file \"direct.ntic.ma\";\n};\n\nzone \"10.168.192.in-addr.arpa\" IN {\n    type master;\n    file \"inverse.ntic.ma\";\n};" }
+                        { text: "Configuration de named.conf : Options, Directe, Inverse.", path: "/etc/named.conf", code: [
+                            { line: "options {", desc: "Début du bloc des options globales" },
+                            { line: "    listen-on port 53 { 127.0.0.1; 192.168.10.252; };", desc: "Écoute sur le port 53 via localhost et l'IP du serveur DNS" },
+                            { line: "    allow-query { localhost; any; };", desc: "Autorise les requêtes de la machine locale et de n'importe qui (any)" },
+                            { line: "};", desc: "Fin des options globales" },
+                            { line: "", desc: "" },
+                            { line: "zone \"ntic.ma\" IN {", desc: "Déclaration de la zone DNS directe (nom vers IP)" },
+                            { line: "    type master;", desc: "Indique que ce serveur est le maître pour cette zone" },
+                            { line: "    file \"direct.ntic.ma\";", desc: "Chemin relatif vers le fichier contenant les enregistrements de la zone" },
+                            { line: "};", desc: "Fin de la déclaration de la zone directe" },
+                            { line: "", desc: "" },
+                            { line: "zone \"10.168.192.in-addr.arpa\" IN {", desc: "Déclaration de la zone inverse (IP vers nom)" },
+                            { line: "    type master;", desc: "Indique que ce serveur est le maître pour cette zone inverse" },
+                            { line: "    file \"inverse.ntic.ma\";", desc: "Chemin relatif vers le fichier de la zone inverse" },
+                            { line: "};", desc: "Fin de la déclaration de la zone inverse" }
+                        ]}
                     ]},
                     { heading: "Fichiers de Zone", items: [
-                        { text: "Zone Directe (direct.ntic.ma)", path: "/var/named/direct.ntic.ma", code: "@   IN  SOA srvdns1.ntic.ma. admin.ntic.ma. (\n        2026010101 ; Serial\n        3600       ; Refresh\n        1800       ; Retry\n        604800     ; Expire\n        86400 )    ; Minimum\n\n@       IN  NS      srvdns1.ntic.ma.\nsrvdns1 IN  A       192.168.10.252\nofppt   IN  CNAME   srvdns1.ntic.ma.\nPC1.ntic.ma IN A    192.168.10.10\nwww     IN  A       192.168.10.30\n@       IN  MX  10  mail.ntic.ma." },
-                        { text: "Zone Inverse (inverse.ntic.ma)", path: "/var/named/inverse.ntic.ma", code: "SOA record\n\n@   IN  NS  srvdns1.ntic.ma.\n252 IN  PTR srvdns1.ntic.ma.\n90  IN  PTR PC1.ntic.ma." }
+                        { text: "Zone Directe (direct.ntic.ma)", path: "/var/named/direct.ntic.ma", code: [
+                            { line: "@   IN  SOA srvdns1.ntic.ma. admin.ntic.ma. (", desc: "Start of Authority : Spécifie le serveur principal et l'email de l'administrateur" },
+                            { line: "        2026010101 ; Serial", desc: "Numéro de série de la zone, à incrémenter après chaque modification" },
+                            { line: "        3600       ; Refresh", desc: "Délai (en sec) pour que les esclaves vérifient les changements" },
+                            { line: "        1800       ; Retry", desc: "Délai avant de retenter si la vérification (Refresh) a échoué" },
+                            { line: "        604800     ; Expire", desc: "Délai après lequel les données sont considérées obsolètes par les esclaves" },
+                            { line: "        86400 )    ; Minimum", desc: "Durée de vie (TTL) minimale par défaut dans le cache" },
+                            { line: "", desc: "" },
+                            { line: "@       IN  NS      srvdns1.ntic.ma.", desc: "Déclare srvdns1 comme Name Server pour ce domaine" },
+                            { line: "srvdns1 IN  A       192.168.10.252", desc: "Enregistrement A (Adresse IPv4) pour la machine srvdns1" },
+                            { line: "ofppt   IN  CNAME   srvdns1.ntic.ma.", desc: "Enregistrement CNAME (Alias) : ofppt pointe vers srvdns1" },
+                            { line: "PC1.ntic.ma IN A    192.168.10.10", desc: "Enregistrement A pour la machine cliente PC1" },
+                            { line: "www     IN  A       192.168.10.30", desc: "Enregistrement A pour le service web www" },
+                            { line: "@       IN  MX  10  mail.ntic.ma.", desc: "Enregistrement MX (Mail Exchange) pointant vers mail.ntic.ma avec priorité 10" }
+                        ]},
+                        { text: "Zone Inverse (inverse.ntic.ma)", path: "/var/named/inverse.ntic.ma", code: [
+                            { line: "SOA record", desc: "L'enregistrement SOA est requis ici (identique à la zone directe)" },
+                            { line: "", desc: "" },
+                            { line: "@   IN  NS  srvdns1.ntic.ma.", desc: "Déclare srvdns1 comme Name Server pour la zone inverse" },
+                            { line: "252 IN  PTR srvdns1.ntic.ma.", desc: "Enregistrement PTR (Pointer) : l'IP finissant par .252 résout vers srvdns1" },
+                            { line: "90  IN  PTR PC1.ntic.ma.", desc: "Enregistrement PTR : l'IP finissant par .90 résout vers PC1" }
+                        ]}
                     ]},
                     { heading: "Vérifications", items: [
-                        { text: "Ajouter le service DNS au firewall de façon permanente.", commands: ["firewall-cmd --permanent --add-service=dns"] },
-                        { text: "Vérifier la syntaxe des configurations.", commands: ["named-checkconf", "named-checkzone ntic.ma /var/named/direct.ntic.ma", "named-checkzone 10.168.192.in-addr.arpa /var/named/inverse.ntic.ma"] }
+                        { text: "Ajouter le service DNS au firewall de façon permanente.", commands: [{cmd: "firewall-cmd --permanent --add-service=dns", desc: "Ouvre le port 53 (DNS) dans le pare-feu de manière permanente"}] },
+                        { text: "Vérifier la syntaxe des configurations.", commands: [{cmd: "named-checkconf", desc: "Vérifie la syntaxe du fichier principal named.conf"}, {cmd: "named-checkzone ntic.ma /var/named/direct.ntic.ma", desc: "Vérifie la syntaxe de la zone directe"}, {cmd: "named-checkzone 10.168.192.in-addr.arpa /var/named/inverse.ntic.ma", desc: "Vérifie la syntaxe de la zone inverse"}] }
                     ]}
                 ]
             },
@@ -449,17 +507,52 @@
                 id: 'dns_slave', title: "2. DNS Esclave et DDNS",
                 sections: [
                     { heading: "Réseau Slave", items: [
-                        { text: "Modification de l'interface ens160 via nmcli.", commands: ["nmcli con modify type ethernet ifname ens160 ipv4.addresses 192.168.10.5/24 ipv4.gateway 192.168.10.1 ipv4.dns \"192.168.10.252, 127.0.0.1\""] }
+                        { text: "Modification de l'interface ens160 via nmcli.", commands: [{cmd: "nmcli con modify type ethernet ifname ens160 ipv4.addresses 192.168.10.5/24 ipv4.gateway 192.168.10.1 ipv4.dns \"192.168.10.252, 127.0.0.1\"", desc: "Configure l'adresse IP statique, la passerelle et les serveurs DNS pour l'interface ens160"}] }
                     ]},
                     { heading: "Résolution Slave", items: [
-                        { text: "Configuration du resolv.conf du slave.", path: "/etc/resolv.conf", code: "nameserver 192.168.10.252\nnameserver 127.0.0.1\nsearch ntic.ma" }
+                        { text: "Configuration du resolv.conf du slave.", path: "/etc/resolv.conf", code: [
+                            { line: "nameserver 192.168.10.252", desc: "Serveur DNS primaire distant" },
+                            { line: "nameserver 127.0.0.1", desc: "Serveur DNS local (slave) en fallback" },
+                            { line: "search ntic.ma", desc: "Domaine de recherche par défaut" }
+                        ]}
                     ]},
                     { heading: "Configuration du DNS Esclave", items: [
-                        { text: "Déclaration des zones slaves dans le fichier principal.", path: "/etc/named.conf", code: "zone \"ntic.ma\" IN {\n    type slave;\n    file \"slaves/direct.ntic.ma.slave\";\n    masters { 192.168.10.252; };\n};\n\nzone \"10.168.192.in-addr.arpa\" IN {\n    type slave;\n    file \"slaves/inverse.ntic.ma.slave\";\n    masters { 192.168.10.252; };\n};" }
+                        { text: "Déclaration des zones slaves dans le fichier principal.", path: "/etc/named.conf", code: [
+                            { line: "zone \"ntic.ma\" IN {", desc: "Déclaration de la zone directe" },
+                            { line: "    type slave;", desc: "Spécifie que ce serveur est un esclave et ne fait que lire la zone" },
+                            { line: "    file \"slaves/direct.ntic.ma.slave\";", desc: "Chemin local où sera stockée la copie de la zone transférée" },
+                            { line: "    masters { 192.168.10.252; };", desc: "Adresse IP du serveur principal (master) depuis lequel récupérer la zone" },
+                            { line: "};", desc: "Fin de la zone directe" },
+                            { line: "", desc: "" },
+                            { line: "zone \"10.168.192.in-addr.arpa\" IN {", desc: "Déclaration de la zone inverse" },
+                            { line: "    type slave;", desc: "Spécifie que ce serveur est un esclave" },
+                            { line: "    file \"slaves/inverse.ntic.ma.slave\";", desc: "Chemin local pour la copie de la zone inverse" },
+                            { line: "    masters { 192.168.10.252; };", desc: "Adresse IP du serveur principal (master)" },
+                            { line: "};", desc: "Fin de la zone inverse" }
+                        ]}
                     ]},
                     { heading: "DDNS", items: [
-                        { text: "Côté DNS: Ajout d'options dans named.conf.", path: "/etc/named.conf", code: "allow-update { any; }; // ou localhost\nrecursion yes;" },
-                        { text: "Côté DHCP: Activation du DDNS et spécification des zones autoritaires.", path: "/etc/dhcp/dhcpd.conf", code: "authoritative;\nddns-updates on;\nddns-update-style interim;\ndeny client-updates;\n\nddns-domainname \"srvdns1.ntic.ma\";\nddns-rev-domainname \"10.168.192.in-addr.arpa\";\n\nzone srvdns1.ntic.ma. {\n    primary 192.168.10.252;\n}\n\nzone 10.168.192.in-addr.arpa. {\n    primary 192.168.10.252;\n}" }
+                        { text: "Côté DNS: Ajout d'options dans named.conf.", path: "/etc/named.conf", code: [
+                            { line: "allow-update { any; }; // ou localhost", desc: "Autorise les mises à jour dynamiques (DDNS) des enregistrements de la zone" },
+                            { line: "recursion yes;", desc: "Autorise le serveur à résoudre des requêtes en interrogeant d'autres DNS si nécessaire" }
+                        ]},
+                        { text: "Côté DHCP: Activation du DDNS et spécification des zones autoritaires.", path: "/etc/dhcp/dhcpd.conf", code: [
+                            { line: "authoritative;", desc: "Déclare que ce serveur DHCP fait autorité sur le réseau local" },
+                            { line: "ddns-updates on;", desc: "Active la mise à jour dynamique du DNS (DDNS)" },
+                            { line: "ddns-update-style interim;", desc: "Spécifie la méthode standard utilisée pour les mises à jour" },
+                            { line: "deny client-updates;", desc: "Empêche les postes clients de mettre à jour le DNS eux-mêmes" },
+                            { line: "", desc: "" },
+                            { line: "ddns-domainname \"srvdns1.ntic.ma\";", desc: "Nom du domaine DNS cible pour les mises à jour" },
+                            { line: "ddns-rev-domainname \"10.168.192.in-addr.arpa\";", desc: "Zone DNS inverse cible pour les mises à jour" },
+                            { line: "", desc: "" },
+                            { line: "zone srvdns1.ntic.ma. {", desc: "Déclare la zone DNS directe spécifique à lier" },
+                            { line: "    primary 192.168.10.252;", desc: "Adresse du serveur DNS primaire qui doit recevoir la mise à jour" },
+                            { line: "}", desc: "Fin de la zone" },
+                            { line: "", desc: "" },
+                            { line: "zone 10.168.192.in-addr.arpa. {", desc: "Déclare la zone DNS inverse à lier" },
+                            { line: "    primary 192.168.10.252;", desc: "Adresse du serveur DNS primaire" },
+                            { line: "}", desc: "Fin de la zone" }
+                        ]}
                     ]}
                 ]
             },
@@ -467,14 +560,30 @@
                 id: 'dhcp', title: "3. Serveur DHCP & Relais",
                 sections: [
                     { heading: "Serveur DHCP", items: [
-                        { text: "Installation de dhcp-server.", commands: ["dnf install dhcp-server"] },
-                        { text: "Configuration du subnet et de la plage d'IP.", path: "/etc/dhcp/dhcpd.conf", code: "subnet 192.168.10.0 netmask 255.255.255.0 {\n    range 192.168.10.10 192.168.10.20;\n    option routers 192.168.10.1;\n    option domain-name-servers 8.8.8.8;\n    option domain-name \"ntic.local\";\n    default-lease-time 2400;\n}" },
-                        { text: "Réservation DHCP par MAC.", code: "host client {\n    hardware ethernet [MAC@];\n    fixed-address [@Reserved];\n}" }
+                        { text: "Installation de dhcp-server.", commands: [{cmd: "dnf install dhcp-server", desc: "Installe le service serveur DHCP"}] },
+                        { text: "Configuration du subnet et de la plage d'IP.", path: "/etc/dhcp/dhcpd.conf", code: [
+                            { line: "subnet 192.168.10.0 netmask 255.255.255.0 {", desc: "Déclaration du sous-réseau avec son adresse et son masque réseau" },
+                            { line: "    range 192.168.10.10 192.168.10.20;", desc: "Définit la plage d'adresses IP (pool) à distribuer dynamiquement" },
+                            { line: "    option routers 192.168.10.1;", desc: "Distribue l'adresse de la passerelle par défaut aux clients" },
+                            { line: "    option domain-name-servers 8.8.8.8;", desc: "Distribue l'adresse des serveurs DNS aux clients" },
+                            { line: "    option domain-name \"ntic.local\";", desc: "Distribue le suffixe de nom de domaine aux clients" },
+                            { line: "    default-lease-time 2400;", desc: "Définit la durée du bail IP par défaut (en secondes)" },
+                            { line: "}", desc: "Fin de la déclaration du sous-réseau" }
+                        ]},
+                        { text: "Réservation DHCP par MAC.", code: [
+                            { line: "host client {", desc: "Ouvre un bloc pour une machine spécifique nommée 'client'" },
+                            { line: "    hardware ethernet [MAC@];", desc: "Indique l'adresse physique (MAC) exacte de cette machine" },
+                            { line: "    fixed-address [@Reserved];", desc: "Définit l'adresse IP fixe qui lui sera toujours attribuée" },
+                            { line: "}", desc: "Fin du bloc hôte" }
+                        ]}
                     ]},
                     { heading: "DHCP-Relay", items: [
-                        { text: "Fichier de configuration du relais.", path: "/etc/sysconfig/dhcrelay", code: "INTERFACES=\"[interface]\"\nDHCPSERVERS=\"[@DHCP Server]\"" },
-                        { text: "Service associé au relais DHCP.", commands: ["cp /lib/systemd/system/dhcrelay.service /etc/systemd/system/"] },
-                        { text: "Activation du routage IPv4 (ip_forward).", path: "/proc/sys/net/ipv4/ip_forward", commands: ["echo 1 > /proc/sys/net/ipv4/ip_forward"] }
+                        { text: "Fichier de configuration du relais.", path: "/etc/sysconfig/dhcrelay", code: [
+                            { line: "INTERFACES=\"[interface]\"", desc: "Spécifie l'interface réseau sur laquelle écouter les requêtes DHCP Broadcast" },
+                            { line: "DHCPSERVERS=\"[@DHCP Server]\"", desc: "Spécifie l'adresse IP du véritable serveur DHCP auquel relayer les requêtes" }
+                        ]},
+                        { text: "Service associé au relais DHCP.", commands: [{cmd: "cp /lib/systemd/system/dhcrelay.service /etc/systemd/system/", desc: "Copie le fichier de service du relais DHCP pour modification locale"}] },
+                        { text: "Activation du routage IPv4 (ip_forward).", path: "/proc/sys/net/ipv4/ip_forward", commands: [{cmd: "echo 1 > /proc/sys/net/ipv4/ip_forward", desc: "Active le routage IP (IP forwarding) à la volée"}] }
                     ]}
                 ]
             },
@@ -482,18 +591,24 @@
                 id: 'ssh', title: "4. SSH & RSA",
                 sections: [
                     { heading: "Serveur SSH", items: [
-                        { text: "Installation du paquet openssh.", commands: ["dnf install openssh"] },
-                        { text: "Configuration SSH (Port 22 par défaut).", path: "/etc/ssh/sshd_config", code: "ListenAddress 192.168.10.10\nPermitRootLogin yes" }
+                        { text: "Installation du paquet openssh.", commands: [{cmd: "dnf install openssh", desc: "Installe le paquet client/serveur SSH"}] },
+                        { text: "Configuration SSH (Port 22 par défaut).", path: "/etc/ssh/sshd_config", code: [
+                            { line: "ListenAddress 192.168.10.10", desc: "Spécifie l'adresse IP sur laquelle le serveur SSH accepte les connexions" },
+                            { line: "PermitRootLogin yes", desc: "Autorise la connexion directe en tant que superutilisateur (root) via SSH" }
+                        ]}
                     ]},
                     { heading: "Commandes Clientes", items: [
-                        { text: "Se connecter en SSH.", commands: ["ssh root@192.168.10.10"] },
-                        { text: "SCP (Télécharger : Serveur vers Client).", commands: ["scp root@192.168.10.10:/root/test_download.txt ."] },
-                        { text: "SCP (Envoyer : Client vers Serveur).", commands: ["scp /home/client1/test_send.txt root@192.168.10.10:/root/"] }
+                        { text: "Se connecter en SSH.", commands: [{cmd: "ssh root@192.168.10.10", desc: "Se connecte à distance au serveur en tant qu'utilisateur root"}] },
+                        { text: "SCP (Télécharger : Serveur vers Client).", commands: [{cmd: "scp root@192.168.10.10:/root/test_download.txt .", desc: "Télécharge un fichier distant vers le répertoire local actuel (.)"}] },
+                        { text: "SCP (Envoyer : Client vers Serveur).", commands: [{cmd: "scp /home/client1/test_send.txt root@192.168.10.10:/root/", desc: "Envoie un fichier local vers le répertoire /root/ du serveur"}] }
                     ]},
                     { heading: "Authentification SSH + RSA", items: [
-                        { text: "Création de la paire de clés RSA 2048 bits.", commands: ["ssh-keygen -t rsa -b 2048 -C \"root@192.168.10.10\""] },
-                        { text: "Exporter la clé publique vers le serveur distant.", commands: ["ssh-copy-id -i ~/.ssh/id_rsa.pub root@192.168.10.10"] },
-                        { text: "Activer l'authentification par clés côté serveur.", path: "/etc/ssh/sshd_config", code: "PubkeyAuthentication yes\nAuthorizedKeysFile .ssh/authorized_keys" }
+                        { text: "Création de la paire de clés RSA 2048 bits.", commands: [{cmd: "ssh-keygen -t rsa -b 2048 -C \"root@192.168.10.10\"", desc: "Génère une paire de clés RSA de 2048 bits avec un commentaire"}] },
+                        { text: "Exporter la clé publique vers le serveur distant.", commands: [{cmd: "ssh-copy-id -i ~/.ssh/id_rsa.pub root@192.168.10.10", desc: "Copie la clé publique locale vers le fichier authorized_keys du serveur"}] },
+                        { text: "Activer l'authentification par clés côté serveur.", path: "/etc/ssh/sshd_config", code: [
+                            { line: "PubkeyAuthentication yes", desc: "Active l'authentification sécurisée par clés publiques" },
+                            { line: "AuthorizedKeysFile .ssh/authorized_keys", desc: "Chemin vers le fichier contenant la liste des clés publiques autorisées" }
+                        ]}
                     ]}
                 ]
             },
@@ -501,14 +616,27 @@
                 id: 'apache', title: "5. Serveur Web Apache",
                 sections: [
                     { heading: "Installation et Dossiers", items: [
-                        { text: "Installation de httpd.", commands: ["dnf install httpd"] },
-                        { text: "Création des répertoires pour les logs et les racines HTML.", commands: ["mkdir -p /var/log/httpd/{afppt,ntic}", "mkdir -p /var/www/html/site{1,2}"] }
+                        { text: "Installation de httpd.", commands: [{cmd: "dnf install httpd", desc: "Installe le serveur web Apache"}] },
+                        { text: "Création des répertoires pour les logs et les racines HTML.", commands: [{cmd: "mkdir -p /var/log/httpd/{afppt,ntic}", desc: "Crée les dossiers de logs pour les deux sites simultanément"}, {cmd: "mkdir -p /var/www/html/site{1,2}", desc: "Crée les dossiers racines pour les deux sites simultanément"}] }
                     ]},
                     { heading: "Résolution locale (/etc/hosts)", items: [
-                        { text: "Fichier /etc/hosts pour faire pointer les noms locaux.", path: "/etc/hosts", code: "192.168.10.252 ntic.com\n192.168.10.252 www.ntic.com\n192.168.10.252 afppt.com\n192.168.10.252 www.afppt.com" }
+                        { text: "Fichier /etc/hosts pour faire pointer les noms locaux.", path: "/etc/hosts", code: [
+                            { line: "192.168.10.252 ntic.com", desc: "Résolution locale : force le nom ntic.com vers l'IP locale" },
+                            { line: "192.168.10.252 www.ntic.com", desc: "Résolution locale pour le sous-domaine www.ntic.com" },
+                            { line: "192.168.10.252 afppt.com", desc: "Résolution locale : force le nom afppt.com vers l'IP locale" },
+                            { line: "192.168.10.252 www.afppt.com", desc: "Résolution locale pour le sous-domaine www.afppt.com" }
+                        ]}
                     ]},
                     { heading: "Fichiers Vhosts", items: [
-                        { text: "Exemple de configuration d'un VirtualHost pour afppt.", path: "/etc/httpd/conf.d/vhost1.conf", code: "<VirtualHost *:80>\n    ServerName afppt.com\n    ServerAlias www.afppt.com\n    ServerAdmin admin@ntic.ma\n    DocumentRoot /var/www/html/site1/\n    ErrorLog /var/log/httpd/afppt/error.log\n</VirtualHost>" }
+                        { text: "Exemple de configuration d'un VirtualHost pour afppt.", path: "/etc/httpd/conf.d/vhost1.conf", code: [
+                            { line: "<VirtualHost *:80>", desc: "Début de la déclaration du VirtualHost écoutant sur le port 80 (HTTP)" },
+                            { line: "    ServerName afppt.com", desc: "Définit le nom de domaine principal de ce site web" },
+                            { line: "    ServerAlias www.afppt.com", desc: "Définit un alias permettant d'accéder au même site avec 'www'" },
+                            { line: "    ServerAdmin admin@ntic.ma", desc: "Email de l'administrateur affiché en cas d'erreur de serveur" },
+                            { line: "    DocumentRoot /var/www/html/site1/", desc: "Dossier racine contenant tous les fichiers (ex: index.html) du site" },
+                            { line: "    ErrorLog /var/log/httpd/afppt/error.log", desc: "Chemin vers le fichier journal spécifique recensant les erreurs de ce site" },
+                            { line: "</VirtualHost>", desc: "Fin de la déclaration du VirtualHost" }
+                        ]}
                     ]}
                 ]
             },
@@ -516,18 +644,29 @@
                 id: 'postfix_nfs', title: "6. Postfix & NFS",
                 sections: [
                     { heading: "Postfix", items: [
-                        { text: "Installation de Postfix.", commands: ["dnf install postfix"] },
-                        { text: "Configuration de main.cf.", path: "/etc/postfix/main.cf", code: "myhostname = srvdns1.ntic.ma\nmydomain = ntic.ma\nmyorigin = $mydomain\ninet_interfaces = all\nmynetworks = 192.168.10.0/24, 127.0.0.0/8\nhome_mailbox = Maildir/" }
+                        { text: "Installation de Postfix.", commands: [{cmd: "dnf install postfix", desc: "Installe le serveur de messagerie SMTP Postfix"}] },
+                        { text: "Configuration de main.cf.", path: "/etc/postfix/main.cf", code: [
+                            { line: "myhostname = srvdns1.ntic.ma", desc: "Définit le nom d'hôte complet (FQDN) du serveur de messagerie" },
+                            { line: "mydomain = ntic.ma", desc: "Définit le nom de domaine internet local géré par le serveur" },
+                            { line: "myorigin = $mydomain", desc: "Domaine ajouté aux courriers expédiés localement (provenance apparente)" },
+                            { line: "inet_interfaces = all", desc: "Le serveur écoute et accepte les connexions sur toutes les interfaces réseau" },
+                            { line: "mynetworks = 192.168.10.0/24, 127.0.0.0/8", desc: "Spécifie les réseaux de confiance autorisés à envoyer et relayer des emails" },
+                            { line: "home_mailbox = Maildir/", desc: "Définit le format de stockage des boîtes aux lettres (format Maildir dans le dossier utilisateur)" }
+                        ]}
                     ]},
                     { heading: "Serveur NFS", items: [
-                        { text: "Installation du paquet NFS Server et création du dossier.", commands: ["dnf install nfs-server", "mkdir /ID-Sharing"] },
-                        { text: "Exporter le dossier à travers le réseau.", path: "/etc/exports", code: "/ID-Sharing 192.168.10.0/24(rw)" },
-                        { text: "Appliquer les règles d'exports.", commands: ["exportfs -r"] }
+                        { text: "Installation du paquet NFS Server et création du dossier.", commands: [{cmd: "dnf install nfs-server", desc: "Installe le serveur de partage de fichiers NFS"}, {cmd: "mkdir /ID-Sharing", desc: "Crée le dossier qui sera partagé sur le réseau"}] },
+                        { text: "Exporter le dossier à travers le réseau.", path: "/etc/exports", code: [
+                            { line: "/ID-Sharing 192.168.10.0/24(rw)", desc: "Exporte le dossier /ID-Sharing au sous-réseau avec droits de Lecture/Écriture (rw)" }
+                        ]},
+                        { text: "Appliquer les règles d'exports.", commands: [{cmd: "exportfs -r", desc: "Recharge la configuration /etc/exports pour appliquer les nouveaux partages"}] }
                     ]},
                     { heading: "Client NFS", items: [
-                        { text: "Vérifier les exports disponibles sur le serveur (depuis client).", commands: ["showmount -e 192.168.10.5"] },
-                        { text: "Montage manuel.", commands: ["mkdir /IDData", "mount 192.168.10.5:/ID-Sharing /IDData"] },
-                        { text: "Montage persistant dans fstab.", path: "/etc/fstab", code: "192.168.10.5:/ID-Sharing /IDData nfs defaults 0 0" }
+                        { text: "Vérifier les exports disponibles sur le serveur (depuis client).", commands: [{cmd: "showmount -e 192.168.10.5", desc: "Affiche la liste des dossiers partagés (exports) par le serveur NFS distant"}] },
+                        { text: "Montage manuel.", commands: [{cmd: "mkdir /IDData", desc: "Crée le point de montage local pour le client NFS"}, {cmd: "mount 192.168.10.5:/ID-Sharing /IDData", desc: "Monte temporairement le partage NFS distant sur le dossier local"}] },
+                        { text: "Montage persistant dans fstab.", path: "/etc/fstab", code: [
+                            { line: "192.168.10.5:/ID-Sharing /IDData nfs defaults 0 0", desc: "Montage automatique : IP:Distant Local Type Options Dump Fsck" }
+                        ]}
                     ]}
                 ]
             },
@@ -535,16 +674,22 @@
                 id: 'samba', title: "7. Samba (SMB/CIFS)",
                 sections: [
                     { heading: "Utilisateurs et Groupes", items: [
-                        { text: "Création du groupe, de l'utilisateur, et ajout du mot de passe Samba.", commands: ["groupadd groups", "useradd ahmed -g groups", "smbpasswd -a ahmed"] }
+                        { text: "Création du groupe, de l'utilisateur, et ajout du mot de passe Samba.", commands: [{cmd: "groupadd groups", desc: "Crée un nouveau groupe système nommé 'groups'"}, {cmd: "useradd ahmed -g groups", desc: "Crée l'utilisateur système 'ahmed' et l'assigne au groupe 'groups'"}, {cmd: "smbpasswd -a ahmed", desc: "Ajoute l'utilisateur 'ahmed' à la base de données Samba et lui demande un mot de passe"}] }
                     ]},
                     { heading: "Serveur Samba", items: [
-                        { text: "Installation de Samba.", commands: ["dnf install samba"] },
-                        { text: "Configuration du fichier de partage.", path: "/etc/samba/smb.conf", code: "[PARTAGE_ID]\n    path = /id-data\n    writable = yes\n    valid users = ahmed\n    hosts allow = 192.168.10.0/24" }
+                        { text: "Installation de Samba.", commands: [{cmd: "dnf install samba", desc: "Installe le serveur de partage de fichiers Samba (compatible Windows)"}] },
+                        { text: "Configuration du fichier de partage.", path: "/etc/samba/smb.conf", code: [
+                            { line: "[PARTAGE_ID]", desc: "Nom de la ressource partagée telle qu'elle apparaîtra pour les clients (Windows/Linux)" },
+                            { line: "    path = /id-data", desc: "Chemin absolu vers le dossier physique sur le serveur Linux" },
+                            { line: "    writable = yes", desc: "Autorise les modifications et l'écriture dans ce partage" },
+                            { line: "    valid users = ahmed", desc: "Restreint l'accès au partage uniquement à l'utilisateur spécifié (ahmed)" },
+                            { line: "    hosts allow = 192.168.10.0/24", desc: "Autorise uniquement les connexions provenant de ce sous-réseau spécifique" }
+                        ]}
                     ]},
                     { heading: "Client Linux Samba", items: [
-                        { text: "Installation des paquets clients cifs.", commands: ["dnf install samba-client cifs-utils"] },
-                        { text: "Connexion en mode CLI interactif.", commands: ["smbclient //192.168.10.10/PARTAGE_ID -U ahmed"] },
-                        { text: "Montage local via cifs.", commands: ["mkdir /ID-REP", "mount -t cifs //192.168.10.10/PARTAGE_ID /ID-REP -o username=ahmed,password=[password]"] }
+                        { text: "Installation des paquets clients cifs.", commands: [{cmd: "dnf install samba-client cifs-utils", desc: "Installe les outils clients pour accéder aux partages Samba et monter du CIFS"}] },
+                        { text: "Connexion en mode CLI interactif.", commands: [{cmd: "smbclient //192.168.10.10/PARTAGE_ID -U ahmed", desc: "Accède au partage Samba via une interface en ligne de commande (type FTP)"}] },
+                        { text: "Montage local via cifs.", commands: [{cmd: "mkdir /ID-REP", desc: "Crée le point de montage local sur la machine cliente"}, {cmd: "mount -t cifs //192.168.10.10/PARTAGE_ID /ID-REP -o username=ahmed,password=[password]", desc: "Monte le partage Windows/Samba sur le système de fichiers local Linux en fournissant les identifiants"}] }
                     ]}
                 ]
             },
@@ -552,22 +697,31 @@
                 id: 'ftp_lvm', title: "8. FTP, Disques, Quotas & LVM",
                 sections: [
                     { heading: "Serveur FTP (vsftpd)", items: [
-                        { text: "Installation et ajout des utilisateurs.", commands: ["dnf install vsftpd -y", "useradd userftp1", "useradd userftp2"] },
-                        { text: "Création d'un fichier public de test.", commands: ["echo \"fichier FTP public\" > /var/ftp/pub/FileFtp.txt"] },
-                        { text: "Configuration vsftpd.", path: "/etc/vsftpd/vsftpd.conf", code: "anonymous_enable=NO\nlocal_enable=YES\nwrite_enable=YES\nchroot_local_user=YES\nftpd_banner=Bienvenue\nuserlist_enable=YES" },
-                        { text: "Ajouter userftp2 à la user_list.", commands: ["echo \"userftp2\" >> /etc/vsftpd/user_list"] },
-                        { text: "Test de connexion et téléchargement.", commands: ["ftp -u userftp1 192.168.10.10", "get fileserver", "mget *"] }
+                        { text: "Installation et ajout des utilisateurs.", commands: [{cmd: "dnf install vsftpd -y", desc: "Installe le serveur FTP Très Sécurisé (vsftpd) sans demander de confirmation"}, {cmd: "useradd userftp1", desc: "Crée le premier utilisateur FTP"}, {cmd: "useradd userftp2", desc: "Crée le second utilisateur FTP"}] },
+                        { text: "Création d'un fichier public de test.", commands: [{cmd: "echo \"fichier FTP public\" > /var/ftp/pub/FileFtp.txt", desc: "Crée un fichier texte de test dans le répertoire public FTP par défaut"}] },
+                        { text: "Configuration vsftpd.", path: "/etc/vsftpd/vsftpd.conf", code: [
+                            { line: "anonymous_enable=NO", desc: "Désactive la connexion pour les utilisateurs anonymes (renforce la sécurité)" },
+                            { line: "local_enable=YES", desc: "Autorise la connexion au FTP pour les utilisateurs locaux du système (userftp1, etc.)" },
+                            { line: "write_enable=YES", desc: "Autorise le téléversement et la modification de fichiers sur le serveur" },
+                            { line: "chroot_local_user=YES", desc: "Enferme les utilisateurs locaux dans leur répertoire personnel (prison chroot)" },
+                            { line: "ftpd_banner=Bienvenue", desc: "Définit le message d'accueil qui sera affiché lors de la connexion du client" },
+                            { line: "userlist_enable=YES", desc: "Active la gestion stricte d'accès via la liste spécifiée dans user_list" }
+                        ]},
+                        { text: "Ajouter userftp2 à la user_list.", commands: [{cmd: "echo \"userftp2\" >> /etc/vsftpd/user_list", desc: "Ajoute userftp2 à la liste des utilisateurs pour contrôler (autoriser/refuser) ses accès"}] },
+                        { text: "Test de connexion et téléchargement.", commands: [{cmd: "ftp -u userftp1 192.168.10.10", desc: "Se connecte au serveur FTP avec l'utilisateur userftp1"}, {cmd: "get fileserver", desc: "Commande FTP interne pour télécharger un fichier unique nommé 'fileserver'"}, {cmd: "mget *", desc: "Commande FTP interne pour télécharger de multiples fichiers (tout le répertoire)"}] }
                     ]},
                     { heading: "Disques et Quotas", items: [
-                        { text: "Partitionnement et système de fichiers.", commands: ["fdisk /dev/sdb", "mkfs.ext4 /dev/sdb1", "tune2fs -m 1 /dev/sdb1"] },
-                        { text: "Commandes de gestion des Quotas.", commands: ["mkdir /mnt/data", "quotacheck -cum /mnt/data", "quotaon /mnt/data", "edquota -u userftp1"] },
-                        { text: "Montage avec support des quotas.", path: "/etc/fstab", code: "UUID=[UUID] /mnt/data ext4 defaults,usrquota,grpquota 0 0" },
-                        { text: "Appliquer le point de montage.", commands: ["mount -a", "mount -o remount /mnt/data"] }
+                        { text: "Partitionnement et système de fichiers.", commands: [{cmd: "fdisk /dev/sdb", desc: "Lance l'outil interactif fdisk pour créer/modifier des partitions sur le disque sdb"}, {cmd: "mkfs.ext4 /dev/sdb1", desc: "Formate la partition fraîchement créée (sdb1) avec le système de fichiers ext4"}, {cmd: "tune2fs -m 1 /dev/sdb1", desc: "Ajuste les paramètres: ne réserve plus que 1% (au lieu de 5%) de l'espace pour l'utilisateur root"}] },
+                        { text: "Commandes de gestion des Quotas.", commands: [{cmd: "mkdir /mnt/data", desc: "Crée le répertoire qui servira de point de montage pour le disque"}, {cmd: "quotacheck -cum /mnt/data", desc: "Analyse le montage et crée les fichiers d'index de quotas aquota.user et aquota.group"}, {cmd: "quotaon /mnt/data", desc: "Active la surveillance et l'application stricte des quotas sur ce point de montage"}, {cmd: "edquota -u userftp1", desc: "Ouvre l'éditeur par défaut pour définir manuellement les limites (Soft/Hard) de l'utilisateur"}] },
+                        { text: "Montage avec support des quotas.", path: "/etc/fstab", code: [
+                            { line: "UUID=[UUID] /mnt/data ext4 defaults,usrquota,grpquota 0 0", desc: "Définit le montage automatique au démarrage en activant les quotas utilisateurs et de groupes" }
+                        ]},
+                        { text: "Appliquer le point de montage.", commands: [{cmd: "mount -a", desc: "Lit le fichier fstab et monte tous les systèmes de fichiers non montés"}, {cmd: "mount -o remount /mnt/data", desc: "Remonte le système de fichiers à chaud pour appliquer les options de quotas sans le démonter"}] }
                     ]},
                     { heading: "LVM", items: [
-                        { text: "Création Volume Physique (PV) et Groupe de Volumes (VG).", commands: ["pvcreate /dev/sdb2", "vgcreate vg-data /dev/sdb2"] },
-                        { text: "Création d'un Volume Logique (LV) de 500M.", commands: ["lvcreate -L 500M -n lv1 vg-data"] },
-                        { text: "Agrandissement (Extension) du LV de +300M.", commands: ["lvextend -L +300M /dev/vg-data/lv1"] }
+                        { text: "Création Volume Physique (PV) et Groupe de Volumes (VG).", commands: [{cmd: "pvcreate /dev/sdb2", desc: "Initialise la partition sdb2 pour être utilisée comme Volume Physique par LVM"}, {cmd: "vgcreate vg-data /dev/sdb2", desc: "Crée un nouveau Groupe de Volumes (VG) nommé 'vg-data' contenant la partition sdb2"}] },
+                        { text: "Création d'un Volume Logique (LV) de 500M.", commands: [{cmd: "lvcreate -L 500M -n lv1 vg-data", desc: "Crée un Volume Logique (LV) nommé 'lv1' de 500 Mo à l'intérieur du groupe 'vg-data'"}] },
+                        { text: "Agrandissement (Extension) du LV de +300M.", commands: [{cmd: "lvextend -L +300M /dev/vg-data/lv1", desc: "Étend dynamiquement la taille du Volume Logique 'lv1' en lui ajoutant 300 Mo supplémentaires"}] }
                     ]}
                 ]
             }
@@ -615,13 +769,14 @@
                 sec.items.forEach((item, iIdx) => {
                     const baseId = `${tIdx}_${sIdx}_${iIdx}`;
                     if (item.commands) {
-                        allTasks.push({ id: `${baseId}_cmd`, topicId: topic.id, topicTitle: topic.title, sectionHeading: sec.heading, type: 'Command(s)', prompt: item.text, expected: item.commands.join('\n') });
+                        // Extract just the command strings for the expected validation answer
+                        allTasks.push({ id: `${baseId}_cmd`, topicId: topic.id, topicTitle: topic.title, sectionHeading: sec.heading, type: 'Command(s)', prompt: item.text, expected: item.commands.map(c => c.cmd).join('\n') });
                     }
                     if (item.path) {
                         allTasks.push({ id: `${baseId}_path`, topicId: topic.id, topicTitle: topic.title, sectionHeading: sec.heading, type: 'File Path', prompt: `Emplacement pour : ${item.text}`, expected: item.path });
                     }
                     if (item.code) {
-                        allTasks.push({ id: `${baseId}_code`, topicId: topic.id, topicTitle: topic.title, sectionHeading: sec.heading, type: 'Configuration Block', prompt: `Contenu / Directives pour : ${item.text}`, expected: item.code });
+                        allTasks.push({ id: `${baseId}_code`, topicId: topic.id, topicTitle: topic.title, sectionHeading: sec.heading, type: 'Configuration Block', prompt: `Contenu / Directives pour : ${item.text}`, expected: item.code.map(c => c.line).join('\n') });
                     }
                 });
             });
