@@ -175,8 +175,15 @@
 
                     <!-- REVISION / CHEAT SHEET MODE -->
                     <div v-if="currentRoute === 'revision'" class="animate-fade-in space-y-8">
-                        <header class="mb-4">
+                        <header class="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <p class="text-slate-400 text-sm">Explications détaillées de chaque ligne de configuration. Révisez à votre rythme avant le combat.</p>
+                            <label class="flex items-center gap-2 cursor-pointer bg-dark-800 border border-slate-700 px-3 py-1.5 rounded-lg shrink-0 hover:bg-dark-700 transition shadow-sm">
+                                <span class="text-xs font-bold uppercase" :class="showExplanations ? 'text-brand-400' : 'text-slate-500'">Explanations</span>
+                                <input type="checkbox" v-model="showExplanations" class="hidden">
+                                <div class="w-8 h-4 bg-slate-700 rounded-full relative transition">
+                                    <div class="absolute top-0 w-4 h-4 rounded-full transition-transform" :class="showExplanations ? 'translate-x-4 bg-brand-500' : 'translate-x-0 bg-slate-400'"></div>
+                                </div>
+                            </label>
                         </header>
 
                         <!-- Topic Selector -->
@@ -216,7 +223,7 @@
                                                         <span class="text-slate-600 mr-2 select-none">$</span>
                                                         <span class="select-all font-bold">{{ cmdObj.cmd }}</span>
                                                     </div>
-                                                    <div v-if="cmdObj.desc" class="flex mt-1">
+                                                    <div v-show="showExplanations && cmdObj.desc" class="flex mt-1">
                                                         <span class="w-3 border-l border-b border-slate-700 rounded-bl mr-2 mb-1"></span>
                                                         <span class="text-slate-400 italic text-[11px]">{{ cmdObj.desc }}</span>
                                                     </div>
@@ -229,7 +236,7 @@
                                             <div v-if="item.code" class="flex flex-col gap-2 p-3">
                                                 <div v-for="(codeObj, cIdx) in item.code" :key="cIdx" class="flex flex-col mb-1">
                                                     <div class="text-brand-300 whitespace-pre-wrap select-all font-medium"><template v-if="codeObj.line === ''">&nbsp;</template>{{ codeObj.line }}</div>
-                                                    <div v-if="codeObj.desc" class="flex mt-1">
+                                                    <div v-show="showExplanations && codeObj.desc" class="flex mt-1">
                                                         <span class="w-3 border-l border-b border-slate-700 rounded-bl mr-2 mb-1"></span>
                                                         <span class="text-slate-400 italic text-[11px]">{{ codeObj.desc }}</span>
                                                     </div>
@@ -846,6 +853,7 @@
                 // --- REVISION / CHEAT SHEET MODE ---
                 const activeRevisionTopicId = ref(linuxData[0].id);
                 const activeRevisionTopic = computed(() => topics.value.find(t => t.id === activeRevisionTopicId.value));
+                const showExplanations = ref(true);
 
                 // --- STUDY MODE (HARDCORE RECALL) ---
                 const activeStudyTopicId = ref(linuxData[0].id);
@@ -1026,7 +1034,7 @@
                     topics, currentRoute, isExtremeMode, navClass,
                     stats, globalAccuracy, getTopicMastery, getTaskAccuracy, weakestTasks,
                     // Revision Mode
-                    activeRevisionTopicId, activeRevisionTopic,
+                    activeRevisionTopicId, activeRevisionTopic, showExplanations,
                     // Study Mode
                     activeStudyTopicId, currentStudyTasks, activeTaskIndex, taskRefs, validateTask, resetTask, setActiveTask, getStatusColor, getStatusIcon,
                     // Speed Drill
