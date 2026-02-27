@@ -265,6 +265,7 @@
                                         :class="task.status"
                                         spellcheck="false"
                                         @focus="activeTaskIndex = idx"
+                                        @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); validateTask(task); }"
                                     ></textarea>
                                     
                                     <div class="flex justify-between items-center">
@@ -313,7 +314,7 @@
                                 <textarea 
                                     ref="drillInput"
                                     v-model="activeDrillTask.userAnswer" 
-                                    @keydown.enter.prevent="submitDrillAnswer"
+                                    @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); submitDrillAnswer(); }"
                                     placeholder="> Answer here and press Enter..."
                                     class="input-terminal w-full p-4 rounded-xl text-base resize-none min-h-[120px]"
                                     :class="drillFeedbackStatus"
@@ -383,7 +384,7 @@
                                             :ref="el => { if(el && idx === flowCurrentIndex) flowInputRef = el }"
                                             v-model="task.userAnswer" 
                                             :disabled="task.status === 'correct'"
-                                            @keydown.enter.prevent="idx === flowCurrentIndex ? validateFlowTask(task, idx) : null"
+                                            @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); if (idx === flowCurrentIndex) validateFlowTask(task, idx); }"
                                             placeholder="> Execute sequence..."
                                             class="input-terminal w-full p-3 rounded text-sm resize-none min-h-[60px]"
                                             :class="task.status"
