@@ -5,244 +5,290 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Linux Server - Elite Memorization Engine</title>
     
+    <!-- Modern Tech Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
-            theme: { extend: { colors: { brand: { 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7' }, dark: { 900: '#0a0f18', 800: '#111827', 700: '#1f2937' }, console: '#050505' } } }
+            theme: { 
+                extend: { 
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: { 
+                        brand: { 50: '#eef2ff', 100: '#e0e7ff', 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' }, 
+                        dark: { 800: '#1e293b', 900: '#0f172a', 950: '#020617' }, 
+                        editor: '#1e1e1e' 
+                    } 
+                } 
+            }
         }
     </script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
     <style>
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #334155; }
+        .dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
         [v-cloak] { display: none; }
         
-        .crt-scanlines {
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            background-size: 100% 4px, 3px 100%;
-            pointer-events: none; position: fixed; inset: 0; z-index: 50; opacity: 0.2;
-        }
-
+        /* IDE-like input terminal */
         .input-terminal {
-            background-color: #050505; color: #33ff00; font-family: monospace;
-            border: 1px solid #374151; outline: none; transition: all 0.2s;
+            background-color: #1e1e1e; 
+            color: #d4d4d4; 
+            font-family: 'JetBrains Mono', monospace;
+            border: 1px solid #334155; 
+            outline: none; 
+            transition: all 0.2s ease;
         }
-        .input-terminal:focus { border-color: #0ea5e9; box-shadow: 0 0 10px rgba(14, 165, 233, 0.3); }
-        .input-terminal.correct { border-color: #22c55e; color: #22c55e; box-shadow: 0 0 10px rgba(34, 197, 94, 0.3); }
-        .input-terminal.typo { border-color: #eab308; color: #eab308; box-shadow: 0 0 10px rgba(234, 179, 8, 0.3); }
-        .input-terminal.wrong { border-color: #ef4444; color: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
+        .input-terminal:focus { border-color: #6366f1; box-shadow: 0 0 0 1px #6366f1; }
+        .input-terminal.correct { border-color: #10b981; box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2); }
+        .input-terminal.typo { border-color: #f59e0b; box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.2); }
+        .input-terminal.wrong { border-color: #ef4444; box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2); }
+        
+        .code-keyword { color: #569cd6; }
+        .code-string { color: #ce9178; }
+        .code-comment { color: #6a9955; }
+        .code-command { color: #4fc1ff; }
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-dark-900 text-slate-800 dark:text-slate-200 font-sans h-screen flex overflow-hidden selection:bg-brand-500 selection:text-white">
+<body class="bg-slate-50 dark:bg-dark-950 text-slate-800 dark:text-slate-200 h-screen flex overflow-hidden selection:bg-brand-500/30 selection:text-brand-700 dark:selection:text-brand-200">
     <div id="app" v-cloak class="flex w-full h-full relative" @keydown="handleGlobalKeydown">
-        <div class="crt-scanlines"></div>
 
         <!-- SIDEBAR -->
-        <aside class="w-20 md:w-72 bg-white dark:bg-dark-800 flex flex-col h-full shadow-2xl z-20 border-r border-slate-200 dark:border-slate-700 transition-all">
-            <div class="p-4 md:p-6 border-b border-slate-200 dark:border-slate-700">
-                <div class="flex items-center gap-3">
-                    <i class="ph-fill ph-cpu text-3xl text-brand-500"></i>
-                    <div class="hidden md:block">
-                        <h1 class="text-lg font-black tracking-tight text-white leading-none uppercase">Neuro-Engine</h1>
-                        <span class="text-xs text-brand-500 font-mono tracking-widest">EXAM PREP V4.0</span>
-                    </div>
+        <aside class="w-20 md:w-72 bg-white dark:bg-dark-900 flex flex-col h-full border-r border-slate-200 dark:border-slate-800 transition-all shrink-0 z-20">
+            <div class="p-4 md:p-6 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3 shrink-0">
+                <div class="w-8 h-8 rounded bg-brand-600 flex items-center justify-center shrink-0">
+                    <i class="ph-bold ph-terminal-window text-xl text-white"></i>
+                </div>
+                <div class="hidden md:block overflow-hidden">
+                    <h1 class="text-sm font-bold tracking-tight text-slate-900 dark:text-white leading-tight truncate">LabEx Simulator</h1>
+                    <span class="text-[10px] text-slate-500 dark:text-slate-400 font-mono tracking-wide uppercase">Linux SysAdmin V4.0</span>
                 </div>
             </div>
 
-            <nav class="flex-1 overflow-y-auto py-4 px-2 space-y-2">
+            <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
                 <button @click="currentRoute = 'dashboard'" :class="navClass('dashboard')">
-                    <i class="ph ph-chart-polar text-xl md:mr-3"></i><span class="hidden md:block text-sm font-bold">Telemetry</span>
+                    <i class="ph ph-chart-line-up text-lg md:mr-3 shrink-0"></i><span class="hidden md:block text-sm font-medium">Dashboard</span>
                 </button>
                 <button @click="currentRoute = 'revision'" :class="navClass('revision')">
-                    <i class="ph ph-book-open text-xl md:mr-3"></i><span class="hidden md:block text-sm font-bold">Cheat Sheet</span>
+                    <i class="ph ph-book-open-text text-lg md:mr-3 shrink-0"></i><span class="hidden md:block text-sm font-medium">Knowledge Base</span>
                 </button>
                 <button @click="currentRoute = 'study'" :class="navClass('study')">
-                    <i class="ph ph-brain text-xl md:mr-3"></i><span class="hidden md:block text-sm font-bold">Hardcore Recall</span>
+                    <i class="ph ph-brain text-lg md:mr-3 shrink-0"></i><span class="hidden md:block text-sm font-medium">Active Recall</span>
                 </button>
                 <button @click="startDailyDrill" :class="navClass('drill')">
-                    <i class="ph ph-timer text-xl md:mr-3"></i><span class="hidden md:block text-sm font-bold">Speed Drill</span>
+                    <i class="ph ph-lightning text-lg md:mr-3 shrink-0"></i><span class="hidden md:block text-sm font-medium">Speed Drill</span>
                 </button>
                 <button @click="currentRoute = 'flow'" :class="navClass('flow')">
-                    <i class="ph ph-git-merge text-xl md:mr-3"></i><span class="hidden md:block text-sm font-bold">Full Flow Config</span>
+                    <i class="ph ph-git-merge text-lg md:mr-3 shrink-0"></i><span class="hidden md:block text-sm font-medium">Flow Config</span>
                 </button>
 
-                <div class="mt-8 px-4 hidden md:block">
-                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Topic Mastery</h3>
-                    <div v-for="topic in topics" :key="topic.id" class="mb-3">
-                        <div class="flex justify-between text-xs mb-1">
-                            <span class="text-slate-300 truncate w-3/4">{{ topic.title }}</span>
-                            <span class="font-mono text-brand-400">{{ getTopicMastery(topic.id) }}%</span>
+                <div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 hidden md:block px-1">
+                    <h3 class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Topic Mastery</h3>
+                    <div v-for="topic in topics" :key="topic.id" class="mb-4">
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <span class="text-slate-600 dark:text-slate-300 truncate w-3/4">{{ topic.title }}</span>
+                            <span class="font-mono text-slate-500 dark:text-slate-400 text-[10px]">{{ getTopicMastery(topic.id) }}%</span>
                         </div>
-                        <div class="h-1 w-full bg-slate-700 rounded-full overflow-hidden">
-                            <div class="h-full bg-brand-500 transition-all duration-500" :style="`width: ${getTopicMastery(topic.id)}%`"></div>
+                        <div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div class="h-full bg-brand-500 transition-all duration-500 rounded-full" :style="`width: ${getTopicMastery(topic.id)}%`"></div>
                         </div>
                     </div>
                 </div>
             </nav>
             
-            <div class="p-4 border-t border-slate-700 hidden md:block">
-                <div class="text-xs text-slate-400 font-mono mb-2">Shortcuts:</div>
-                <div class="grid grid-cols-2 gap-2 text-[10px] text-slate-500 font-mono">
-                    <div><kbd class="bg-slate-700 px-1 rounded text-slate-300">ENTER</kbd> Validate</div>
-                    <div><kbd class="bg-slate-700 px-1 rounded text-slate-300">SHIFT+ENT</kbd> New line</div>
-                    <div><kbd class="bg-slate-700 px-1 rounded text-slate-300">N</kbd> Next</div>
-                    <div><kbd class="bg-slate-700 px-1 rounded text-slate-300">R</kbd> Retry</div>
+            <div class="p-4 border-t border-slate-200 dark:border-slate-800 hidden md:block bg-slate-50 dark:bg-dark-950 shrink-0">
+                <div class="text-[10px] text-slate-500 dark:text-slate-400 font-mono uppercase tracking-wider mb-2">Shortcuts</div>
+                <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-600 dark:text-slate-400">
+                    <div class="flex items-center gap-1.5"><kbd class="bg-white dark:bg-dark-800 border border-slate-200 dark:border-slate-700 shadow-sm px-1 rounded text-slate-700 dark:text-slate-300 font-mono text-[9px]">ENT</kbd> Validate</div>
+                    <div class="flex items-center gap-1.5"><kbd class="bg-white dark:bg-dark-800 border border-slate-200 dark:border-slate-700 shadow-sm px-1 rounded text-slate-700 dark:text-slate-300 font-mono text-[9px]">⇧+ENT</kbd> New Line</div>
+                    <div class="flex items-center gap-1.5"><kbd class="bg-white dark:bg-dark-800 border border-slate-200 dark:border-slate-700 shadow-sm px-1 rounded text-slate-700 dark:text-slate-300 font-mono text-[9px]">^N</kbd> Next</div>
+                    <div class="flex items-center gap-1.5"><kbd class="bg-white dark:bg-dark-800 border border-slate-200 dark:border-slate-700 shadow-sm px-1 rounded text-slate-700 dark:text-slate-300 font-mono text-[9px]">^R</kbd> Retry</div>
                 </div>
             </div>
         </aside>
 
         <!-- MAIN CONTENT -->
-        <main class="flex-1 flex flex-col h-full overflow-hidden relative bg-dark-900">
+        <main class="flex-1 flex flex-col h-full overflow-hidden relative">
             
             <!-- TOP CONTROL PANEL -->
-            <header class="bg-dark-800 border-b border-slate-700 p-4 flex justify-between items-center z-10 shrink-0">
+            <header class="bg-white dark:bg-dark-900 border-b border-slate-200 dark:border-slate-800 px-6 py-3 flex justify-between items-center z-10 shrink-0">
                 <div class="flex items-center gap-4">
-                    <h2 class="text-lg font-black uppercase tracking-wider text-white">
-                        <span v-if="currentRoute==='dashboard'">Command Center</span>
-                        <span v-if="currentRoute==='revision'">Knowledge Base (Cheat Sheet)</span>
-                        <span v-if="currentRoute==='study'">Active Recall Matrix</span>
-                        <span v-if="currentRoute==='drill'">Timed Combat Drill</span>
-                        <span v-if="currentRoute==='flow'">Sequential Configuration</span>
+                    <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                        <span v-if="currentRoute==='dashboard'">Dashboard Overview</span>
+                        <span v-if="currentRoute==='revision'">Knowledge Base</span>
+                        <span v-if="currentRoute==='study'">Active Recall Training</span>
+                        <span v-if="currentRoute==='drill'">Timed Speed Drill</span>
+                        <span v-if="currentRoute==='flow'">Sequential Configuration Flow</span>
                     </h2>
                 </div>
                 <div class="flex items-center gap-4">
-                    <label class="flex items-center gap-2 cursor-pointer" v-if="currentRoute==='study'">
-                        <span class="text-xs font-bold uppercase" :class="isExtremeMode ? 'text-red-500' : 'text-slate-500'">Extreme Mode</span>
+                    <label class="flex items-center gap-2 cursor-pointer group" v-if="currentRoute==='study'">
+                        <span class="text-xs font-medium" :class="isExtremeMode ? 'text-red-500 dark:text-red-400' : 'text-slate-500 dark:text-slate-400'">Strict Mode</span>
                         <input type="checkbox" v-model="isExtremeMode" class="hidden">
-                        <div class="w-8 h-4 bg-slate-700 rounded-full relative transition">
-                            <div class="absolute w-4 h-4 rounded-full bg-white transition-transform" :class="isExtremeMode ? 'translate-x-4 bg-red-500' : 'translate-x-0'"></div>
+                        <div class="w-8 h-4 bg-slate-200 dark:bg-slate-700 rounded-full relative transition border border-transparent group-hover:border-slate-300 dark:group-hover:border-slate-600">
+                            <div class="absolute top-[1px] left-[1px] w-3 h-3 rounded-full bg-white transition-transform shadow-sm" :class="isExtremeMode ? 'translate-x-4 !bg-red-500 shadow-red-500/50' : ''"></div>
                         </div>
                     </label>
-                    <div class="text-xs font-mono text-slate-400 bg-dark-700 px-3 py-1 rounded border border-slate-600">
-                        Accuracy: <span class="text-brand-400 font-bold">{{ globalAccuracy }}%</span>
+                    <div class="h-4 w-px bg-slate-200 dark:bg-slate-800" v-if="currentRoute==='study'"></div>
+                    <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                        <span>GLOBAL ACCURACY</span>
+                        <span class="px-2 py-0.5 rounded-md font-semibold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/10 border border-brand-200 dark:border-brand-500/20">{{ globalAccuracy }}%</span>
                     </div>
                 </div>
             </header>
 
             <!-- ROUTES -->
             <div class="flex-1 overflow-y-auto p-6 md:p-8 scroll-smooth" ref="scrollContainer">
-                <div class="max-w-5xl mx-auto space-y-8 pb-32">
+                <div class="max-w-5xl mx-auto space-y-6 pb-32">
 
                     <!-- DASHBOARD -->
                     <div v-if="currentRoute === 'dashboard'" class="animate-fade-in space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="bg-dark-800 p-6 rounded-xl border border-slate-700 shadow-lg">
-                                <i class="ph-duotone ph-target text-3xl text-brand-500 mb-2"></i>
-                                <div class="text-slate-400 text-xs font-bold uppercase mb-1">Total Validations</div>
-                                <div class="text-3xl font-black text-white">{{ stats.totalAttempts }}</div>
+                            <div class="bg-white dark:bg-dark-900 p-6 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                                <div class="flex items-center gap-3 mb-4">
+                                    <div class="p-2 bg-slate-50 dark:bg-dark-800 rounded-md text-brand-500 border border-slate-100 dark:border-slate-700">
+                                        <i class="ph-bold ph-target text-xl"></i>
+                                    </div>
+                                    <div class="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">Total Attempts</div>
+                                </div>
+                                <div class="text-3xl font-bold text-slate-900 dark:text-white">{{ stats.totalAttempts }}</div>
                             </div>
-                            <div class="bg-dark-800 p-6 rounded-xl border border-slate-700 shadow-lg">
-                                <i class="ph-duotone ph-check-circle text-3xl text-green-500 mb-2"></i>
-                                <div class="text-slate-400 text-xs font-bold uppercase mb-1">Perfect Hits</div>
-                                <div class="text-3xl font-black text-white">{{ stats.hits }}</div>
+                            
+                            <div class="bg-white dark:bg-dark-900 p-6 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                                <div class="flex items-center gap-3 mb-4">
+                                    <div class="p-2 bg-emerald-50 dark:bg-emerald-500/10 rounded-md text-emerald-600 border border-emerald-100 dark:border-emerald-500/20">
+                                        <i class="ph-bold ph-check-circle text-xl"></i>
+                                    </div>
+                                    <div class="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">Perfect Hits</div>
+                                </div>
+                                <div class="text-3xl font-bold text-slate-900 dark:text-white">{{ stats.hits }}</div>
                             </div>
-                            <button @click="startDailyDrill" class="bg-brand-600 hover:bg-brand-500 p-6 rounded-xl border border-brand-500 shadow-lg shadow-brand-600/20 text-left transition group">
-                                <i class="ph-duotone ph-lightning text-3xl text-white mb-2 group-hover:scale-110 transition"></i>
-                                <div class="text-brand-200 text-xs font-bold uppercase mb-1">Initialize</div>
-                                <div class="text-2xl font-black text-white">Daily Drill (20Q)</div>
+
+                            <button @click="startDailyDrill" class="bg-brand-600 hover:bg-brand-700 text-left p-6 rounded-lg border border-brand-500 shadow-sm transition group flex flex-col justify-between relative overflow-hidden">
+                                <div class="absolute right-0 top-0 w-32 h-32 bg-white opacity-5 rounded-full blur-2xl -translate-y-10 translate-x-10 group-hover:scale-110 transition-transform"></div>
+                                <div class="flex items-center gap-3 mb-4 relative z-10">
+                                    <div class="p-2 bg-white/20 rounded-md text-white border border-white/20">
+                                        <i class="ph-bold ph-lightning text-xl"></i>
+                                    </div>
+                                    <div class="text-brand-100 text-xs font-semibold uppercase tracking-wider">Quick Action</div>
+                                </div>
+                                <div class="text-xl font-bold text-white relative z-10">Start Daily Drill <span class="opacity-75 font-normal text-sm ml-1">(20 Items)</span></div>
                             </button>
                         </div>
 
                         <!-- Mistake Tracking Engine -->
-                        <div class="bg-dark-800 rounded-xl border border-slate-700 p-6 shadow-lg">
-                            <h3 class="text-lg font-black text-white mb-4 flex items-center gap-2">
-                                <i class="ph-fill ph-warning-circle text-red-500"></i> Weak Points Dashboard
+                        <div class="bg-white dark:bg-dark-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm p-6">
+                            <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-2">
+                                <i class="ph-fill ph-warning-circle text-amber-500 text-lg"></i> Priority Learning Targets
                             </h3>
                             <div class="space-y-3">
-                                <div v-for="(task, idx) in weakestTasks" :key="idx" class="flex flex-col md:flex-row md:items-center justify-between p-4 bg-dark-900 rounded border border-slate-700 gap-4">
-                                    <div class="flex-1">
-                                        <div class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">{{ task.topicTitle }} - {{ task.type }}</div>
-                                        <div class="text-sm text-slate-300">{{ task.prompt }}</div>
+                                <div v-for="(task, idx) in weakestTasks" :key="idx" class="flex flex-col md:flex-row md:items-center justify-between p-4 bg-slate-50 dark:bg-dark-950 rounded-md border border-slate-100 dark:border-slate-800 gap-4">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 truncate">{{ task.topicTitle }} <span class="mx-1">•</span> {{ task.type }}</div>
+                                        <div class="text-sm font-medium text-slate-700 dark:text-slate-300 truncate" :title="task.prompt">{{ task.prompt }}</div>
                                     </div>
-                                    <div class="flex items-center gap-4 w-full md:w-auto">
-                                        <div class="w-full md:w-32 h-2 bg-slate-700 rounded-full overflow-hidden">
-                                            <div class="h-full bg-red-500" :style="`width: ${task.accuracy}%`"></div>
+                                    <div class="flex items-center gap-4 w-full md:w-48 shrink-0">
+                                        <div class="flex-1 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                                            <div class="h-full bg-amber-500 rounded-full" :style="`width: ${task.accuracy}%`"></div>
                                         </div>
-                                        <span class="text-xs font-mono text-red-400 font-bold w-12 text-right">{{ task.accuracy }}%</span>
+                                        <span class="text-xs font-mono font-medium text-slate-600 dark:text-slate-400 w-10 text-right">{{ task.accuracy }}%</span>
                                     </div>
                                 </div>
-                                <div v-if="weakestTasks.length === 0" class="text-sm text-slate-500 font-mono italic">
-                                    Insufficient data. Engage in combat drills to map neural weaknesses.
+                                <div v-if="weakestTasks.length === 0" class="p-6 text-center border border-dashed border-slate-200 dark:border-slate-700 rounded-md">
+                                    <div class="text-sm text-slate-500 dark:text-slate-400">Insufficient data. Complete drills to identify weak points.</div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- REVISION / CHEAT SHEET MODE -->
-                    <div v-if="currentRoute === 'revision'" class="animate-fade-in space-y-8">
-                        <header class="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <p class="text-slate-400 text-sm">Explications détaillées de chaque ligne de configuration. Révisez à votre rythme avant le combat.</p>
-                            <label class="flex items-center gap-2 cursor-pointer bg-dark-800 border border-slate-700 px-3 py-1.5 rounded-lg shrink-0 hover:bg-dark-700 transition shadow-sm">
-                                <span class="text-xs font-bold uppercase" :class="showExplanations ? 'text-brand-400' : 'text-slate-500'">Explanations</span>
+                    <div v-if="currentRoute === 'revision'" class="animate-fade-in space-y-6">
+                        <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-dark-900 p-4 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
+                            <p class="text-slate-600 dark:text-slate-400 text-sm">Review configuration structures, commands, and paths without evaluation pressure.</p>
+                            <label class="flex items-center gap-2 cursor-pointer bg-slate-50 dark:bg-dark-950 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-md shrink-0 hover:bg-slate-100 dark:hover:bg-dark-800 transition">
+                                <span class="text-xs font-semibold" :class="showExplanations ? 'text-brand-600 dark:text-brand-400' : 'text-slate-500'">Show Explanations</span>
                                 <input type="checkbox" v-model="showExplanations" class="hidden">
-                                <div class="w-8 h-4 bg-slate-700 rounded-full relative transition">
-                                    <div class="absolute top-0 w-4 h-4 rounded-full transition-transform" :class="showExplanations ? 'translate-x-4 bg-brand-500' : 'translate-x-0 bg-slate-400'"></div>
+                                <div class="w-7 h-3.5 bg-slate-200 dark:bg-slate-700 rounded-full relative transition">
+                                    <div class="absolute top-[1px] left-[1px] w-3 h-3 rounded-full bg-white shadow-sm transition-transform" :class="showExplanations ? 'translate-x-3.5 !bg-brand-500' : ''"></div>
                                 </div>
                             </label>
                         </header>
 
-                        <!-- Topic Selector -->
-                        <div class="flex overflow-x-auto gap-2 pb-2">
+                        <!-- Topic Tabs -->
+                        <div class="flex overflow-x-auto gap-1 border-b border-slate-200 dark:border-slate-800 pb-px">
                             <button v-for="topic in topics" :key="'rev_'+topic.id" 
                                 @click="activeRevisionTopicId = topic.id"
-                                class="px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition border"
-                                :class="activeRevisionTopicId === topic.id ? 'bg-brand-600 border-brand-500 text-white' : 'bg-dark-800 border-slate-700 text-slate-400 hover:text-white'">
+                                class="px-4 py-2 text-sm font-medium whitespace-nowrap transition border-b-2"
+                                :class="activeRevisionTopicId === topic.id ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'">
                                 {{ topic.title }}
                             </button>
                         </div>
 
                         <div v-if="activeRevisionTopic" class="space-y-6">
-                            <div v-for="(sec, sIdx) in activeRevisionTopic.sections" :key="'rev_sec_'+sIdx" class="bg-dark-800 rounded-xl border border-slate-700 overflow-hidden shadow-lg">
-                                <div class="bg-dark-900 px-5 py-4 border-b border-slate-700 flex items-center gap-3">
-                                    <div class="w-6 h-6 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center font-bold text-xs">{{ sIdx + 1 }}</div>
-                                    <h3 class="font-bold text-white uppercase tracking-wide text-sm">{{ sec.heading }}</h3>
+                            <div v-for="(sec, sIdx) in activeRevisionTopic.sections" :key="'rev_sec_'+sIdx" class="bg-white dark:bg-dark-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                                <div class="bg-slate-50 dark:bg-dark-950 px-5 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3">
+                                    <div class="w-5 h-5 rounded flex items-center justify-center font-bold text-[10px] bg-white dark:bg-dark-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 shadow-sm">{{ sIdx + 1 }}</div>
+                                    <h3 class="font-semibold text-slate-800 dark:text-slate-200 text-sm">{{ sec.heading }}</h3>
                                 </div>
                                 <div class="p-5 space-y-6">
-                                    <div v-for="(item, iIdx) in sec.items" :key="'rev_item_'+iIdx" class="space-y-3 pb-4 border-b border-slate-700/50 last:border-0 last:pb-0">
+                                    <div v-for="(item, iIdx) in sec.items" :key="'rev_item_'+iIdx" class="space-y-3">
                                         <div class="flex items-start gap-2">
-                                            <i class="ph-fill ph-caret-right text-brand-500 mt-1"></i>
-                                            <span class="text-slate-300 font-medium leading-relaxed">{{ item.text }}</span>
+                                            <i class="ph-bold ph-caret-right text-brand-500 mt-0.5 text-sm"></i>
+                                            <span class="text-slate-700 dark:text-slate-300 font-medium text-sm">{{ item.text }}</span>
                                         </div>
                                         
                                         <div v-if="item.path" class="ml-6 flex items-center gap-2">
-                                            <i class="ph-fill ph-folder-open text-amber-500"></i>
-                                            <code class="px-3 py-1.5 bg-amber-500/10 text-amber-400 rounded border border-amber-500/20 font-mono text-xs">{{ item.path }}</code>
+                                            <i class="ph-duotone ph-folder-open text-slate-400"></i>
+                                            <code class="px-2 py-0.5 bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-300 rounded border border-slate-200 dark:border-slate-700 font-mono text-[11px]">{{ item.path }}</code>
                                         </div>
                                         
-                                        <div v-if="item.commands || item.code" class="ml-6 bg-console rounded-lg p-4 border border-slate-700 font-mono text-xs overflow-x-auto shadow-inner">
+                                        <!-- IDE Pane Mockup -->
+                                        <div v-if="item.commands || item.code" class="ml-6 bg-[#1e1e1e] rounded-md border border-[#333] shadow-inner overflow-hidden flex flex-col">
+                                            <div class="bg-[#2d2d2d] px-3 py-1.5 flex gap-2 border-b border-[#111]">
+                                                <div class="w-2.5 h-2.5 rounded-full bg-[#ff5f56]"></div>
+                                                <div class="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]"></div>
+                                                <div class="w-2.5 h-2.5 rounded-full bg-[#27c93f]"></div>
+                                            </div>
                                             
-                                            <!-- Commands -->
-                                            <div v-if="item.commands" class="flex flex-col gap-4 bg-dark-900/50 p-3 rounded">
-                                                <div v-for="(cmdObj, cmdIdx) in item.commands" :key="cmdIdx" class="flex flex-col">
-                                                    <div class="flex text-green-400">
-                                                        <span class="text-slate-600 mr-2 select-none">$</span>
-                                                        <span class="select-all font-bold">{{ cmdObj.cmd }}</span>
+                                            <div class="p-4 font-mono text-[13px] overflow-x-auto leading-relaxed">
+                                                <!-- Commands -->
+                                                <div v-if="item.commands" class="flex flex-col gap-3">
+                                                    <div v-for="(cmdObj, cmdIdx) in item.commands" :key="cmdIdx" class="flex flex-col">
+                                                        <div class="flex">
+                                                            <span class="text-[#569cd6] mr-2 select-none">$</span>
+                                                            <span class="select-all text-[#d4d4d4]">{{ cmdObj.cmd }}</span>
+                                                        </div>
+                                                        <div v-show="showExplanations && cmdObj.desc" class="flex mt-1">
+                                                            <span class="w-3 border-l border-b border-[#333] rounded-bl mr-2 mb-1"></span>
+                                                            <span class="code-comment italic text-[11px]">// {{ cmdObj.desc }}</span>
+                                                        </div>
                                                     </div>
-                                                    <div v-show="showExplanations && cmdObj.desc" class="flex mt-1">
-                                                        <span class="w-3 border-l border-b border-slate-700 rounded-bl mr-2 mb-1"></span>
-                                                        <span class="text-slate-400 italic text-[11px]">{{ cmdObj.desc }}</span>
+                                                </div>
+
+                                                <div v-if="item.commands && item.code" class="my-4 border-t border-[#333] w-full"></div>
+                                                
+                                                <!-- Configuration Code Blocks -->
+                                                <div v-if="item.code" class="flex flex-col gap-1">
+                                                    <div v-for="(codeObj, cIdx) in item.code" :key="cIdx" class="flex flex-col mb-1">
+                                                        <div class="text-[#d4d4d4] whitespace-pre-wrap select-all"><template v-if="codeObj.line === ''">&nbsp;</template>{{ codeObj.line }}</div>
+                                                        <div v-show="showExplanations && codeObj.desc" class="flex mt-0.5">
+                                                            <span class="w-3 border-l border-b border-[#333] rounded-bl mr-2 mb-1"></span>
+                                                            <span class="code-comment italic text-[11px]">// {{ codeObj.desc }}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-
-                                            <div v-if="item.commands && item.code" class="my-4 border-t border-slate-800 w-full"></div>
-                                            
-                                            <!-- Configuration Code Blocks -->
-                                            <div v-if="item.code" class="flex flex-col gap-2 p-3">
-                                                <div v-for="(codeObj, cIdx) in item.code" :key="cIdx" class="flex flex-col mb-1">
-                                                    <div class="text-brand-300 whitespace-pre-wrap select-all font-medium"><template v-if="codeObj.line === ''">&nbsp;</template>{{ codeObj.line }}</div>
-                                                    <div v-show="showExplanations && codeObj.desc" class="flex mt-1">
-                                                        <span class="w-3 border-l border-b border-slate-700 rounded-bl mr-2 mb-1"></span>
-                                                        <span class="text-slate-400 italic text-[11px]">{{ codeObj.desc }}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-
                                         </div>
                                     </div>
                                 </div>
@@ -251,62 +297,71 @@
                     </div>
 
                     <!-- STUDY / HARDCORE RECALL MODE -->
-                    <div v-if="currentRoute === 'study'" class="animate-fade-in space-y-8">
+                    <div v-if="currentRoute === 'study'" class="animate-fade-in space-y-6">
                         
-                        <!-- Topic Selector -->
-                        <div class="flex overflow-x-auto gap-2 pb-2">
+                        <!-- Topic Tabs -->
+                        <div class="flex overflow-x-auto gap-1 border-b border-slate-200 dark:border-slate-800 pb-px">
                             <button v-for="topic in topics" :key="topic.id" 
                                 @click="activeStudyTopicId = topic.id"
-                                class="px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition border"
-                                :class="activeStudyTopicId === topic.id ? 'bg-brand-600 border-brand-500 text-white' : 'bg-dark-800 border-slate-700 text-slate-400 hover:text-white'">
+                                class="px-4 py-2 text-sm font-medium whitespace-nowrap transition border-b-2"
+                                :class="activeStudyTopicId === topic.id ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'">
                                 {{ topic.title }}
                             </button>
                         </div>
 
                         <!-- Active Recall Cards -->
-                        <div class="space-y-6">
+                        <div class="space-y-4">
                             <div v-for="(task, idx) in currentStudyTasks" :key="task.id" 
-                                class="bg-dark-800 rounded-xl border transition-all duration-300 overflow-hidden shadow-lg"
-                                :class="{'ring-2 ring-brand-500': activeTaskIndex === idx, 'border-slate-700': !task.status, 'border-green-500': task.status==='correct', 'border-yellow-500': task.status==='typo', 'border-red-500': task.status==='wrong'}">
+                                class="bg-white dark:bg-dark-900 rounded-lg border transition-all duration-300 overflow-hidden shadow-sm flex flex-col"
+                                :class="{'ring-1 ring-brand-500 border-brand-500': activeTaskIndex === idx, 'border-slate-200 dark:border-slate-800': !task.status && activeTaskIndex !== idx, 'border-emerald-500 dark:border-emerald-500/50 ring-1 ring-emerald-500/20': task.status==='correct', 'border-amber-500 dark:border-amber-500/50 ring-1 ring-amber-500/20': task.status==='typo', 'border-red-500 dark:border-red-500/50 ring-1 ring-red-500/20': task.status==='wrong'}">
                                 
-                                <div class="p-5 border-b border-slate-700/50 flex gap-3 cursor-pointer" @click="setActiveTask(idx)">
-                                    <div class="mt-1" :class="getStatusColor(task.status)">
-                                        <i class="ph-fill text-xl" :class="getStatusIcon(task.status)"></i>
+                                <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex gap-3 cursor-pointer items-start bg-slate-50/50 dark:bg-dark-900/50" @click="setActiveTask(idx)">
+                                    <div class="mt-0.5" :class="getStatusColor(task.status)">
+                                        <i class="ph-fill text-lg" :class="getStatusIcon(task.status)"></i>
                                     </div>
-                                    <div class="flex-1">
-                                        <div class="text-xs font-bold uppercase text-slate-500 mb-1 flex justify-between">
-                                            <span>Target: {{ task.type }}</span>
-                                            <span class="font-mono">{{ getTaskAccuracy(task.id) }}% Acc</span>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex justify-between items-center mb-1">
+                                            <span class="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 tracking-wider">TARGET: {{ task.type }}</span>
+                                            <span class="text-[10px] font-mono font-medium text-slate-500 bg-slate-100 dark:bg-dark-800 px-1.5 py-0.5 rounded">{{ getTaskAccuracy(task.id) }}% Acc</span>
                                         </div>
-                                        <p class="text-slate-200 font-medium leading-relaxed" v-html="task.prompt"></p>
+                                        <p class="text-sm font-medium text-slate-800 dark:text-slate-200" v-html="task.prompt"></p>
                                     </div>
                                 </div>
                                 
-                                <div class="p-5 bg-console flex flex-col gap-3">
-                                    <textarea 
-                                        :ref="el => { if(el) taskRefs[idx] = el }"
-                                        v-model="task.userAnswer" 
-                                        :disabled="task.status === 'correct'"
-                                        placeholder="> type answer here..."
-                                        class="input-terminal w-full p-3 rounded text-sm resize-none min-h-[80px]"
-                                        :class="task.status"
-                                        spellcheck="false"
-                                        @focus="activeTaskIndex = idx"
-                                        @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); validateTask(task); }"
-                                    ></textarea>
+                                <!-- Editor Area -->
+                                <div class="p-4 bg-white dark:bg-dark-950 flex flex-col gap-3">
+                                    <div class="relative rounded-md overflow-hidden border focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500 transition-all"
+                                        :class="{'border-emerald-500/50': task.status==='correct', 'border-amber-500/50': task.status==='typo', 'border-red-500/50': task.status==='wrong', 'border-slate-200 dark:border-slate-700': !task.status}">
+                                        
+                                        <!-- Editor Header -->
+                                        <div class="bg-slate-100 dark:bg-dark-800 px-3 py-1 flex items-center border-b border-slate-200 dark:border-slate-700">
+                                            <span class="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase">Input</span>
+                                        </div>
+                                        
+                                        <textarea 
+                                            :ref="el => { if(el) taskRefs[idx] = el }"
+                                            v-model="task.userAnswer" 
+                                            :disabled="task.status === 'correct'"
+                                            placeholder="Type configuration here..."
+                                            class="w-full p-3 bg-[#1e1e1e] text-[#d4d4d4] font-mono text-[13px] resize-none outline-none min-h-[80px]"
+                                            spellcheck="false"
+                                            @focus="activeTaskIndex = idx"
+                                            @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); validateTask(task); }"
+                                        ></textarea>
+                                    </div>
                                     
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-[10px] text-slate-500 font-mono uppercase">Enter to Validate, Shift+Enter for new line</span>
-                                        <div class="flex gap-2">
-                                            <button v-if="task.status" @click="resetTask(task)" class="px-3 py-1 text-xs font-bold text-slate-400 hover:text-white border border-slate-600 rounded bg-dark-700">Retry (R)</button>
-                                            <button v-if="task.status !== 'correct'" @click="validateTask(task)" class="px-4 py-1 text-xs font-bold text-white bg-brand-600 hover:bg-brand-500 rounded border border-brand-500 shadow-lg">Verify</button>
+                                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                        <span class="text-[10px] text-slate-500 dark:text-slate-400 font-mono flex items-center gap-1.5"><kbd class="bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-slate-700 px-1 rounded text-slate-600 dark:text-slate-300">ENT</kbd> to Validate, <kbd class="bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-slate-700 px-1 rounded text-slate-600 dark:text-slate-300">⇧+ENT</kbd> for new line</span>
+                                        <div class="flex gap-2 w-full sm:w-auto">
+                                            <button v-if="task.status" @click="resetTask(task)" class="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-dark-800 hover:bg-slate-50 dark:hover:bg-dark-700 transition">Retry (R)</button>
+                                            <button v-if="task.status !== 'correct'" @click="validateTask(task)" class="flex-1 sm:flex-none px-4 py-1.5 text-xs font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-md transition shadow-sm">Verify</button>
                                         </div>
                                     </div>
 
                                     <!-- Feedback UI -->
-                                    <div v-if="task.status && task.status !== 'correct'" class="mt-2 p-3 rounded border font-mono text-xs whitespace-pre-wrap"
-                                        :class="task.status === 'typo' ? 'bg-yellow-900/20 border-yellow-700/50 text-yellow-300' : 'bg-red-900/20 border-red-700/50 text-red-300'">
-                                        <div class="font-bold mb-1 uppercase text-[10px]">{{ task.status === 'typo' ? 'Minor Typo Detected. Expected:' : 'Critical Failure. Expected:' }}</div>
+                                    <div v-if="task.status && task.status !== 'correct'" class="mt-1 p-3 rounded-md border font-mono text-[12px] whitespace-pre-wrap"
+                                        :class="task.status === 'typo' ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20 text-amber-700 dark:text-amber-400' : 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400'">
+                                        <div class="font-bold mb-1.5 uppercase text-[10px]">{{ task.status === 'typo' ? 'Minor Typo Detected. Expected:' : 'Critical Failure. Expected:' }}</div>
                                         {{ task.expected }}
                                     </div>
                                 </div>
@@ -316,125 +371,141 @@
 
                     <!-- SPEED DRILL -->
                     <div v-if="currentRoute === 'drill'" class="animate-fade-in flex flex-col items-center justify-center min-h-[60vh]">
-                        <div v-if="!drillActive && drillQueue.length === 0" class="text-center">
-                            <i class="ph-duotone ph-timer text-6xl text-brand-500 mb-4"></i>
-                            <h2 class="text-3xl font-black text-white mb-2">Speed Drill Mode</h2>
-                            <p class="text-slate-400 mb-8 max-w-md">20 random questions. 15 seconds per question. Immediate validation. No mercy.</p>
-                            <button @click="startDailyDrill" class="px-8 py-3 bg-brand-600 hover:bg-brand-500 text-white font-black text-lg rounded-xl shadow-[0_0_20px_rgba(14,165,233,0.4)]">Commence Drill</button>
+                        <div v-if="!drillActive && drillQueue.length === 0" class="text-center bg-white dark:bg-dark-900 p-10 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm max-w-lg w-full">
+                            <div class="w-16 h-16 bg-brand-50 dark:bg-brand-500/10 rounded-full flex items-center justify-center mx-auto mb-5 text-brand-600 dark:text-brand-400">
+                                <i class="ph-bold ph-lightning text-3xl"></i>
+                            </div>
+                            <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Speed Drill Mode</h2>
+                            <p class="text-slate-500 dark:text-slate-400 text-sm mb-8">20 random questions. 15 seconds per question. Immediate validation. No mercy.</p>
+                            <button @click="startDailyDrill" class="w-full px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-md shadow-sm transition">Commence Drill</button>
                         </div>
 
-                        <div v-else-if="drillActive" class="w-full max-w-3xl">
-                            <div class="flex justify-between items-end mb-4">
-                                <div class="text-brand-400 font-mono text-sm font-bold">Question {{ 20 - drillQueue.length + 1 }} / 20</div>
-                                <div class="text-3xl font-black font-mono" :class="drillTimer < 5 ? 'text-red-500 animate-pulse' : 'text-white'">00:{{ String(drillTimer).padStart(2, '0') }}</div>
+                        <div v-else-if="drillActive" class="w-full max-w-2xl">
+                            <div class="flex justify-between items-end mb-3">
+                                <div class="text-brand-600 dark:text-brand-400 font-medium text-sm">Question {{ 20 - drillQueue.length + 1 }} of 20</div>
+                                <div class="text-2xl font-mono font-bold" :class="drillTimer < 5 ? 'text-red-500 animate-pulse' : 'text-slate-800 dark:text-white'">00:{{ String(drillTimer).padStart(2, '0') }}</div>
                             </div>
                             
                             <!-- Timer Bar -->
-                            <div class="h-2 w-full bg-slate-800 rounded-full overflow-hidden mb-8">
+                            <div class="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mb-6">
                                 <div class="h-full transition-all duration-1000 linear" :class="drillTimer < 5 ? 'bg-red-500' : 'bg-brand-500'" :style="`width: ${(drillTimer / 15) * 100}%`"></div>
                             </div>
 
-                            <div class="bg-dark-800 p-8 rounded-2xl border border-slate-700 shadow-2xl relative overflow-hidden">
-                                <div class="text-xs font-bold uppercase text-slate-500 mb-2">{{ activeDrillTask.topicTitle }} | Target: {{ activeDrillTask.type }}</div>
-                                <h3 class="text-xl text-white font-medium mb-6 leading-relaxed" v-html="activeDrillTask.prompt"></h3>
+                            <div class="bg-white dark:bg-dark-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
+                                <div class="p-6 pb-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-dark-950/50">
+                                    <div class="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 tracking-wider mb-2">{{ activeDrillTask.topicTitle }} • {{ activeDrillTask.type }}</div>
+                                    <h3 class="text-lg text-slate-800 dark:text-slate-200 font-medium leading-relaxed" v-html="activeDrillTask.prompt"></h3>
+                                </div>
                                 
-                                <textarea 
-                                    ref="drillInput"
-                                    v-model="activeDrillTask.userAnswer" 
-                                    @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); submitDrillAnswer(); }"
-                                    placeholder="> Answer here and press Enter..."
-                                    class="input-terminal w-full p-4 rounded-xl text-base resize-none min-h-[120px]"
-                                    :class="drillFeedbackStatus"
-                                    spellcheck="false"
-                                    :disabled="drillFeedbackStatus !== ''"
-                                ></textarea>
+                                <div class="p-6 bg-white dark:bg-dark-900">
+                                    <div class="relative rounded-md overflow-hidden border border-slate-200 dark:border-slate-700 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500 transition-all">
+                                        <div class="bg-slate-100 dark:bg-dark-800 px-3 py-1 flex items-center border-b border-slate-200 dark:border-slate-700">
+                                            <span class="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase">Terminal Input</span>
+                                        </div>
+                                        <textarea 
+                                            ref="drillInput"
+                                            v-model="activeDrillTask.userAnswer" 
+                                            @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); submitDrillAnswer(); }"
+                                            placeholder="Type your answer here..."
+                                            class="w-full p-4 bg-[#1e1e1e] text-[#d4d4d4] font-mono text-[14px] resize-none outline-none min-h-[120px]"
+                                            spellcheck="false"
+                                            :disabled="drillFeedbackStatus !== ''"
+                                        ></textarea>
+                                    </div>
 
-                                <div v-if="drillFeedbackStatus" class="mt-4 p-4 rounded-lg font-mono text-sm whitespace-pre-wrap border animate-fade-in"
-                                    :class="drillFeedbackStatus === 'correct' ? 'bg-green-900/20 border-green-700/50 text-green-400' : (drillFeedbackStatus === 'typo' ? 'bg-yellow-900/20 border-yellow-700/50 text-yellow-400' : 'bg-red-900/20 border-red-700/50 text-red-400')">
-                                    <div class="font-bold mb-1 uppercase text-[10px]">{{ drillFeedbackStatus === 'correct' ? 'VALIDATED' : 'EXPECTED:' }}</div>
-                                    {{ drillFeedbackStatus === 'correct' ? 'Perfect Match.' : activeDrillTask.expected }}
+                                    <div v-if="drillFeedbackStatus" class="mt-4 p-4 rounded-md font-mono text-xs whitespace-pre-wrap border animate-fade-in"
+                                        :class="drillFeedbackStatus === 'correct' ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400' : (drillFeedbackStatus === 'typo' ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20 text-amber-700 dark:text-amber-400' : 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400')">
+                                        <div class="font-bold mb-1.5 uppercase text-[10px]">{{ drillFeedbackStatus === 'correct' ? 'VALIDATED' : 'EXPECTED:' }}</div>
+                                        {{ drillFeedbackStatus === 'correct' ? 'Perfect Match.' : activeDrillTask.expected }}
+                                    </div>
                                 </div>
                             </div>
                             
-                            <div class="mt-6 flex justify-between items-center">
-                                <div class="text-slate-400 font-mono text-sm">Score: <span class="text-white font-bold">{{ drillScore }}</span></div>
-                                <button v-if="drillFeedbackStatus" @click="nextDrillQuestion" class="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-lg uppercase tracking-wider text-sm transition focus:ring focus:ring-slate-500">Next (N)</button>
+                            <div class="mt-6 flex justify-between items-center px-2">
+                                <div class="text-slate-500 dark:text-slate-400 font-medium text-sm">Score: <span class="text-slate-900 dark:text-white font-bold">{{ drillScore }}</span></div>
+                                <button v-if="drillFeedbackStatus" @click="nextDrillQuestion" class="px-5 py-2 bg-slate-800 hover:bg-slate-700 dark:bg-slate-200 dark:hover:bg-white text-white dark:text-slate-900 font-medium rounded-md text-sm transition focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 dark:focus:ring-offset-dark-900">Next (N)</button>
                             </div>
                         </div>
 
                         <!-- Drill Results -->
-                        <div v-if="!drillActive && drillQueue.length === 0 && drillScore > 0" class="text-center w-full max-w-md">
-                            <h2 class="text-4xl font-black text-white mb-2">Drill Complete</h2>
-                            <div class="bg-dark-800 p-8 rounded-2xl border border-slate-700 my-8">
-                                <div class="text-6xl font-black mb-2" :class="drillAccuracy >= 80 ? 'text-green-500' : (drillAccuracy >= 50 ? 'text-yellow-500' : 'text-red-500')">
+                        <div v-if="!drillActive && drillQueue.length === 0 && drillScore > 0" class="text-center w-full max-w-md bg-white dark:bg-dark-900 p-10 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                            <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-6">Drill Complete</h2>
+                            <div class="bg-slate-50 dark:bg-dark-950 p-8 rounded-lg border border-slate-100 dark:border-slate-800 mb-8">
+                                <div class="text-5xl font-bold mb-2 font-mono" :class="drillAccuracy >= 80 ? 'text-emerald-500' : (drillAccuracy >= 50 ? 'text-amber-500' : 'text-red-500')">
                                     {{ drillAccuracy }}%
                                 </div>
-                                <div class="text-slate-400 font-mono text-sm uppercase">Final Accuracy</div>
+                                <div class="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">Final Accuracy</div>
                             </div>
-                            <button @click="startDailyDrill" class="w-full px-6 py-3 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-lg uppercase tracking-wider transition">Run Again</button>
+                            <button @click="startDailyDrill" class="w-full px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-md transition">Run Again</button>
                         </div>
                     </div>
 
                     <!-- FULL FLOW MEMORY MODE -->
-                    <div v-if="currentRoute === 'flow'" class="animate-fade-in space-y-8">
-                        <header class="mb-4">
-                            <p class="text-slate-400 text-sm">Prove your mastery by writing the complete configuration sequence from zero. No skipping.</p>
+                    <div v-if="currentRoute === 'flow'" class="animate-fade-in space-y-6">
+                        <header class="bg-white dark:bg-dark-900 p-4 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
+                            <p class="text-slate-600 dark:text-slate-400 text-sm">Prove your mastery by writing the complete configuration sequence from zero. No skipping.</p>
                         </header>
 
-                        <!-- Topic Selector -->
-                        <div class="flex overflow-x-auto gap-2 pb-2">
+                        <!-- Topic Tabs -->
+                        <div class="flex overflow-x-auto gap-1 border-b border-slate-200 dark:border-slate-800 pb-px">
                             <button v-for="topic in topics" :key="'flow_'+topic.id" 
                                 @click="startFlow(topic.id)"
-                                class="px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition border"
-                                :class="activeFlowTopicId === topic.id ? 'bg-brand-600 border-brand-500 text-white' : 'bg-dark-800 border-slate-700 text-slate-400 hover:text-white'">
+                                class="px-4 py-2 text-sm font-medium whitespace-nowrap transition border-b-2"
+                                :class="activeFlowTopicId === topic.id ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'">
                                 {{ topic.title }}
                             </button>
                         </div>
 
-                        <div v-if="activeFlowTopicId" class="relative pl-6 border-l-2 border-slate-700 space-y-8 pb-12">
+                        <div v-if="activeFlowTopicId" class="relative pl-6 sm:pl-8 border-l-2 border-slate-200 dark:border-slate-800 space-y-8 pb-12 ml-2">
                             <div v-for="(task, idx) in flowTasks" :key="'ft_'+idx" class="relative">
                                 <!-- Node Dot -->
-                                <div class="absolute -left-[35px] top-4 w-6 h-6 rounded-full border-4 flex items-center justify-center transition-colors"
+                                <div class="absolute -left-[35px] sm:-left-[43px] top-4 w-6 h-6 rounded-full border-4 flex items-center justify-center transition-colors bg-slate-50 dark:bg-dark-950"
                                     :class="getFlowDotClass(task.status, idx)">
-                                    <i v-if="task.status === 'correct'" class="ph-bold ph-check text-green-500 text-xs"></i>
-                                    <span v-else-if="idx === flowCurrentIndex" class="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
+                                    <i v-if="task.status === 'correct'" class="ph-bold ph-check text-emerald-500 text-[10px]"></i>
+                                    <span v-else-if="idx === flowCurrentIndex" class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
                                 </div>
 
-                                <div class="bg-dark-800 rounded-xl border p-5 transition-all shadow-md"
+                                <div class="bg-white dark:bg-dark-900 rounded-lg border transition-all"
                                     :class="getFlowCardClass(task.status, idx)">
                                     
-                                    <div class="text-xs font-bold uppercase text-slate-500 mb-2">Step {{ idx + 1 }} : {{ task.type }}</div>
-                                    <p class="text-white font-medium mb-4" :class="{'opacity-50': idx > flowCurrentIndex}">{{ task.prompt }}</p>
+                                    <div class="p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-dark-950/50 flex flex-col gap-1 rounded-t-lg">
+                                        <div class="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 tracking-wider">Step {{ idx + 1 }} • {{ task.type }}</div>
+                                        <p class="text-slate-800 dark:text-slate-200 font-medium text-sm" :class="{'opacity-50': idx > flowCurrentIndex}">{{ task.prompt }}</p>
+                                    </div>
 
-                                    <div v-if="idx <= flowCurrentIndex" class="space-y-3">
-                                        <textarea 
-                                            :ref="el => { if(el && idx === flowCurrentIndex) flowInputRef = el }"
-                                            v-model="task.userAnswer" 
-                                            :disabled="task.status === 'correct'"
-                                            @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); if (idx === flowCurrentIndex) validateFlowTask(task, idx); }"
-                                            placeholder="> Execute sequence..."
-                                            class="input-terminal w-full p-3 rounded text-sm resize-none min-h-[60px]"
-                                            :class="task.status"
-                                            spellcheck="false"
-                                        ></textarea>
+                                    <div v-if="idx <= flowCurrentIndex" class="p-5 flex flex-col gap-3">
+                                        <div class="relative rounded-md overflow-hidden border border-slate-200 dark:border-slate-700 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500 transition-all">
+                                            <div class="bg-slate-100 dark:bg-dark-800 px-3 py-1 flex items-center border-b border-slate-200 dark:border-slate-700">
+                                                <span class="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase">Input</span>
+                                            </div>
+                                            <textarea 
+                                                :ref="el => { if(el && idx === flowCurrentIndex) flowInputRef = el }"
+                                                v-model="task.userAnswer" 
+                                                :disabled="task.status === 'correct'"
+                                                @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); if (idx === flowCurrentIndex) validateFlowTask(task, idx); }"
+                                                placeholder="Execute sequence..."
+                                                class="w-full p-3 bg-[#1e1e1e] text-[#d4d4d4] font-mono text-[13px] resize-none outline-none min-h-[60px]"
+                                                spellcheck="false"
+                                            ></textarea>
+                                        </div>
                                         
-                                        <div v-if="task.status && task.status !== 'correct'" class="p-3 rounded border font-mono text-xs whitespace-pre-wrap bg-red-900/20 border-red-700/50 text-red-300">
+                                        <div v-if="task.status && task.status !== 'correct'" class="p-3 rounded-md border font-mono text-xs whitespace-pre-wrap bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400">
                                             <div class="font-bold mb-1 uppercase text-[10px]">Sequence Break. Expected:</div>
                                             {{ task.expected }}
                                         </div>
                                         
-                                        <div v-if="idx === flowCurrentIndex" class="flex justify-end gap-2">
-                                            <button @click="resetFlowTask(task)" class="px-3 py-1 text-xs font-bold text-slate-400 bg-dark-700 rounded border border-slate-600 hover:text-white">Retry (R)</button>
-                                            <button @click="validateFlowTask(task, idx)" class="px-4 py-1 text-xs font-bold text-white bg-brand-600 rounded border border-brand-500 shadow-lg hover:bg-brand-500">Commit</button>
+                                        <div v-if="idx === flowCurrentIndex" class="flex justify-end gap-2 mt-1">
+                                            <button @click="resetFlowTask(task)" class="px-4 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-dark-800 hover:bg-slate-50 dark:hover:bg-dark-700 transition">Retry (R)</button>
+                                            <button @click="validateFlowTask(task, idx)" class="px-5 py-1.5 text-xs font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-md transition shadow-sm">Commit</button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div v-if="flowTasks.length > 0 && flowCurrentIndex >= flowTasks.length" class="bg-green-900/20 border border-green-700 p-8 rounded-xl text-center shadow-[0_0_30px_rgba(34,197,94,0.2)]">
-                                <i class="ph-duotone ph-shield-check text-6xl text-green-500 mb-4"></i>
-                                <h3 class="text-2xl font-black text-white">Sequence Mastery Confirmed</h3>
-                                <p class="text-green-400 font-mono text-sm mt-2">All configuration steps deployed successfully.</p>
+                            <div v-if="flowTasks.length > 0 && flowCurrentIndex >= flowTasks.length" class="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 p-8 rounded-lg text-center">
+                                <i class="ph-duotone ph-shield-check text-5xl text-emerald-500 mb-3"></i>
+                                <h3 class="text-xl font-bold text-slate-900 dark:text-white">Sequence Mastery Confirmed</h3>
+                                <p class="text-emerald-700 dark:text-emerald-400 text-sm mt-1 font-medium">All configuration steps deployed successfully.</p>
                             </div>
                         </div>
                     </div>
@@ -847,8 +918,8 @@
 
                 // NAV CLASS
                 const navClass = (route) => currentRoute.value === route 
-                    ? "w-full text-left px-4 py-3 rounded-lg flex items-center bg-brand-500/10 text-brand-400 font-bold border border-brand-500/30 transition" 
-                    : "w-full text-left px-4 py-3 rounded-lg flex items-center text-slate-500 hover:bg-dark-700 hover:text-white transition";
+                    ? "w-full text-left px-3 py-2 rounded-md flex items-center bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 font-medium transition" 
+                    : "w-full text-left px-3 py-2 rounded-md flex items-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-800 transition";
 
                 // --- REVISION / CHEAT SHEET MODE ---
                 const activeRevisionTopicId = ref(linuxData[0].id);
@@ -886,8 +957,8 @@
                 const setActiveTask = (idx) => { activeTaskIndex.value = idx; focusActiveTask(); };
 
                 const getStatusColor = (status) => {
-                    if (status === 'correct') return 'text-green-500';
-                    if (status === 'typo') return 'text-yellow-500';
+                    if (status === 'correct') return 'text-emerald-500';
+                    if (status === 'typo') return 'text-amber-500';
                     if (status === 'wrong') return 'text-red-500';
                     return 'text-brand-500';
                 };
@@ -895,7 +966,7 @@
                     if (status === 'correct') return 'ph-check-circle';
                     if (status === 'typo') return 'ph-warning';
                     if (status === 'wrong') return 'ph-x-circle';
-                    return 'ph-terminal';
+                    return 'ph-terminal-window';
                 };
 
                 // --- SPEED DRILL MODE ---
@@ -991,15 +1062,15 @@
                 const resetFlowTask = (task) => { task.userAnswer = ''; task.status = ''; nextTick(() => { if(flowInputRef.value) flowInputRef.value.focus(); }); };
 
                 const getFlowDotClass = (status, idx) => {
-                    if (status === 'correct') return 'bg-dark-900 border-green-500';
-                    if (idx === flowCurrentIndex.value) return 'bg-dark-900 border-brand-500';
-                    return 'bg-dark-900 border-slate-700';
+                    if (status === 'correct') return 'border-emerald-500';
+                    if (idx === flowCurrentIndex.value) return 'border-brand-500';
+                    return 'border-slate-200 dark:border-slate-700';
                 };
                 const getFlowCardClass = (status, idx) => {
-                    if (status === 'correct') return 'border-green-500/50 bg-green-900/10 opacity-75';
-                    if (idx === flowCurrentIndex.value) return 'border-brand-500 ring-1 ring-brand-500 shadow-[0_0_15px_rgba(14,165,233,0.2)]';
-                    if (idx > flowCurrentIndex.value) return 'border-slate-800 opacity-40 grayscale pointer-events-none';
-                    return 'border-slate-700';
+                    if (status === 'correct') return 'border-emerald-500/50 bg-emerald-50 dark:bg-emerald-900/10 opacity-75';
+                    if (idx === flowCurrentIndex.value) return 'border-brand-500 ring-1 ring-brand-500 shadow-sm';
+                    if (idx > flowCurrentIndex.value) return 'border-slate-200 dark:border-slate-800 opacity-50 grayscale pointer-events-none';
+                    return 'border-slate-200 dark:border-slate-800';
                 };
 
 
