@@ -1,31 +1,34 @@
 <!DOCTYPE html>
 <html lang="fr" class="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Linux Server - Elite Memorization Engine</title>
-    
+
     <!-- Modern Tech Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
-            theme: { 
-                extend: { 
+            theme: {
+                extend: {
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
                         mono: ['JetBrains Mono', 'monospace'],
                     },
-                    colors: { 
-                        brand: { 50: '#eef2ff', 100: '#e0e7ff', 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' }, 
-                        dark: { 800: '#1e293b', 900: '#0f172a', 950: '#020617' }, 
-                        editor: '#1e1e1e' 
-                    } 
-                } 
+                    colors: {
+                        brand: { 50: '#eef2ff', 100: '#e0e7ff', 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' },
+                        dark: { 800: '#1e293b', 900: '#0f172a', 950: '#020617' },
+                        editor: '#1e1e1e'
+                    }
+                }
             }
         }
     </script>
@@ -33,96 +36,170 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
     <style>
-        body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .dark ::-webkit-scrollbar-thumb { background: #334155; }
-        .dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
-        [v-cloak] { display: none; }
-        
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .dark ::-webkit-scrollbar-thumb {
+            background: #334155;
+        }
+
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        [v-cloak] {
+            display: none;
+        }
+
         /* IDE-like input terminal */
         .input-terminal {
-            background-color: #1e1e1e; 
-            color: #d4d4d4; 
+            background-color: #1e1e1e;
+            color: #d4d4d4;
             font-family: 'JetBrains Mono', monospace;
-            border: 1px solid #334155; 
-            outline: none; 
+            border: 1px solid #334155;
+            outline: none;
             transition: all 0.2s ease;
         }
-        .input-terminal:focus { border-color: #6366f1; box-shadow: 0 0 0 1px #6366f1; }
-        .input-terminal.correct { border-color: #10b981; box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2); }
-        .input-terminal.typo { border-color: #f59e0b; box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.2); }
-        .input-terminal.wrong { border-color: #ef4444; box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2); }
-        
-        .code-keyword { color: #569cd6; }
-        .code-string { color: #ce9178; }
-        .code-comment { color: #6a9955; }
-        .code-command { color: #4fc1ff; }
+
+        .input-terminal:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 1px #6366f1;
+        }
+
+        .input-terminal.correct {
+            border-color: #10b981;
+            box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2);
+        }
+
+        .input-terminal.typo {
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.2);
+        }
+
+        .input-terminal.wrong {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2);
+        }
+
+        .code-keyword {
+            color: #569cd6;
+        }
+
+        .code-string {
+            color: #ce9178;
+        }
+
+        .code-comment {
+            color: #6a9955;
+        }
+
+        .code-command {
+            color: #4fc1ff;
+        }
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-dark-950 text-slate-800 dark:text-slate-200 h-screen flex overflow-hidden selection:bg-brand-500/30 selection:text-brand-700 dark:selection:text-brand-200">
+
+<body
+    class="bg-slate-50 dark:bg-dark-950 text-slate-800 dark:text-slate-200 h-screen flex overflow-hidden selection:bg-brand-500/30 selection:text-brand-700 dark:selection:text-brand-200">
     <div id="app" v-cloak class="flex w-full h-full relative" @keydown="handleGlobalKeydown">
 
         <!-- SIDEBAR -->
-        <aside class="w-20 md:w-72 bg-white dark:bg-dark-900 flex flex-col h-full border-r border-slate-200 dark:border-slate-800 transition-all shrink-0 z-20">
+        <aside
+            class="w-20 md:w-72 bg-white dark:bg-dark-900 flex flex-col h-full border-r border-slate-200 dark:border-slate-800 transition-all shrink-0 z-20">
             <div class="p-4 md:p-6 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3 shrink-0">
                 <div class="w-8 h-8 rounded bg-brand-600 flex items-center justify-center shrink-0">
                     <i class="ph-bold ph-terminal-window text-xl text-white"></i>
                 </div>
                 <div class="hidden md:block overflow-hidden">
-                    <h1 class="text-sm font-bold tracking-tight text-slate-900 dark:text-white leading-tight truncate">LabEx Simulator</h1>
-                    <span class="text-[10px] text-slate-500 dark:text-slate-400 font-mono tracking-wide uppercase">Linux SysAdmin V4.0</span>
+                    <h1 class="text-sm font-bold tracking-tight text-slate-900 dark:text-white leading-tight truncate">
+                        LabEx Simulator</h1>
+                    <span class="text-[10px] text-slate-500 dark:text-slate-400 font-mono tracking-wide uppercase">Linux
+                        SysAdmin V4.0</span>
                 </div>
             </div>
 
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
                 <button @click="currentRoute = 'dashboard'" :class="navClass('dashboard')">
-                    <i class="ph ph-chart-line-up text-lg md:mr-3 shrink-0"></i><span class="hidden md:block text-sm font-medium">Dashboard</span>
+                    <i class="ph ph-chart-line-up text-lg md:mr-3 shrink-0"></i><span
+                        class="hidden md:block text-sm font-medium">Dashboard</span>
                 </button>
                 <button @click="currentRoute = 'revision'" :class="navClass('revision')">
-                    <i class="ph ph-book-open-text text-lg md:mr-3 shrink-0"></i><span class="hidden md:block text-sm font-medium">Knowledge Base</span>
+                    <i class="ph ph-book-open-text text-lg md:mr-3 shrink-0"></i><span
+                        class="hidden md:block text-sm font-medium">Knowledge Base</span>
                 </button>
                 <button @click="currentRoute = 'study'" :class="navClass('study')">
-                    <i class="ph ph-brain text-lg md:mr-3 shrink-0"></i><span class="hidden md:block text-sm font-medium">Active Recall</span>
+                    <i class="ph ph-brain text-lg md:mr-3 shrink-0"></i><span
+                        class="hidden md:block text-sm font-medium">Active Recall</span>
                 </button>
                 <button @click="startDailyDrill" :class="navClass('drill')">
-                    <i class="ph ph-lightning text-lg md:mr-3 shrink-0"></i><span class="hidden md:block text-sm font-medium">Speed Drill</span>
+                    <i class="ph ph-lightning text-lg md:mr-3 shrink-0"></i><span
+                        class="hidden md:block text-sm font-medium">Speed Drill</span>
                 </button>
                 <button @click="currentRoute = 'flow'" :class="navClass('flow')">
-                    <i class="ph ph-git-merge text-lg md:mr-3 shrink-0"></i><span class="hidden md:block text-sm font-medium">Flow Config</span>
+                    <i class="ph ph-git-merge text-lg md:mr-3 shrink-0"></i><span
+                        class="hidden md:block text-sm font-medium">Flow Config</span>
                 </button>
 
                 <div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 hidden md:block px-1">
-                    <h3 class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Topic Mastery</h3>
+                    <h3 class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">
+                        Topic Mastery</h3>
                     <div v-for="topic in topics" :key="topic.id" class="mb-4">
                         <div class="flex justify-between text-xs mb-1.5">
                             <span class="text-slate-600 dark:text-slate-300 truncate w-3/4">{{ topic.title }}</span>
-                            <span class="font-mono text-slate-500 dark:text-slate-400 text-[10px]">{{ getTopicMastery(topic.id) }}%</span>
+                            <span class="font-mono text-slate-500 dark:text-slate-400 text-[10px]">{{
+                                getTopicMastery(topic.id) }}%</span>
                         </div>
                         <div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                            <div class="h-full bg-brand-500 transition-all duration-500 rounded-full" :style="`width: ${getTopicMastery(topic.id)}%`"></div>
+                            <div class="h-full bg-brand-500 transition-all duration-500 rounded-full"
+                                :style="`width: ${getTopicMastery(topic.id)}%`"></div>
                         </div>
                     </div>
                 </div>
             </nav>
-            
-            <div class="p-4 border-t border-slate-200 dark:border-slate-800 hidden md:block bg-slate-50 dark:bg-dark-950 shrink-0">
-                <div class="text-[10px] text-slate-500 dark:text-slate-400 font-mono uppercase tracking-wider mb-2">Shortcuts</div>
+
+            <div
+                class="p-4 border-t border-slate-200 dark:border-slate-800 hidden md:block bg-slate-50 dark:bg-dark-950 shrink-0">
+                <div class="text-[10px] text-slate-500 dark:text-slate-400 font-mono uppercase tracking-wider mb-2">
+                    Shortcuts</div>
                 <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-600 dark:text-slate-400">
-                    <div class="flex items-center gap-1.5"><kbd class="bg-white dark:bg-dark-800 border border-slate-200 dark:border-slate-700 shadow-sm px-1 rounded text-slate-700 dark:text-slate-300 font-mono text-[9px]">ENT</kbd> Validate</div>
-                    <div class="flex items-center gap-1.5"><kbd class="bg-white dark:bg-dark-800 border border-slate-200 dark:border-slate-700 shadow-sm px-1 rounded text-slate-700 dark:text-slate-300 font-mono text-[9px]">⇧+ENT</kbd> New Line</div>
-                    <div class="flex items-center gap-1.5"><kbd class="bg-white dark:bg-dark-800 border border-slate-200 dark:border-slate-700 shadow-sm px-1 rounded text-slate-700 dark:text-slate-300 font-mono text-[9px]">^N</kbd> Next</div>
-                    <div class="flex items-center gap-1.5"><kbd class="bg-white dark:bg-dark-800 border border-slate-200 dark:border-slate-700 shadow-sm px-1 rounded text-slate-700 dark:text-slate-300 font-mono text-[9px]">^R</kbd> Retry</div>
+                    <div class="flex items-center gap-1.5"><kbd
+                            class="bg-white dark:bg-dark-800 border border-slate-200 dark:border-slate-700 shadow-sm px-1 rounded text-slate-700 dark:text-slate-300 font-mono text-[9px]">ENT</kbd>
+                        Validate</div>
+                    <div class="flex items-center gap-1.5"><kbd
+                            class="bg-white dark:bg-dark-800 border border-slate-200 dark:border-slate-700 shadow-sm px-1 rounded text-slate-700 dark:text-slate-300 font-mono text-[9px]">⇧+ENT</kbd>
+                        New Line</div>
+                    <div class="flex items-center gap-1.5"><kbd
+                            class="bg-white dark:bg-dark-800 border border-slate-200 dark:border-slate-700 shadow-sm px-1 rounded text-slate-700 dark:text-slate-300 font-mono text-[9px]">^N</kbd>
+                        Next</div>
+                    <div class="flex items-center gap-1.5"><kbd
+                            class="bg-white dark:bg-dark-800 border border-slate-200 dark:border-slate-700 shadow-sm px-1 rounded text-slate-700 dark:text-slate-300 font-mono text-[9px]">^R</kbd>
+                        Retry</div>
                 </div>
             </div>
         </aside>
 
         <!-- MAIN CONTENT -->
         <main class="flex-1 flex flex-col h-full overflow-hidden relative">
-            
+
             <!-- TOP CONTROL PANEL -->
-            <header class="bg-white dark:bg-dark-900 border-b border-slate-200 dark:border-slate-800 px-6 py-3 flex justify-between items-center z-10 shrink-0">
+            <header
+                class="bg-white dark:bg-dark-900 border-b border-slate-200 dark:border-slate-800 px-6 py-3 flex justify-between items-center z-10 shrink-0">
                 <div class="flex items-center gap-4">
                     <h2 class="text-sm font-semibold text-slate-800 dark:text-slate-200">
                         <span v-if="currentRoute==='dashboard'">Dashboard Overview</span>
@@ -134,16 +211,22 @@
                 </div>
                 <div class="flex items-center gap-4">
                     <label class="flex items-center gap-2 cursor-pointer group" v-if="currentRoute==='study'">
-                        <span class="text-xs font-medium" :class="isExtremeMode ? 'text-red-500 dark:text-red-400' : 'text-slate-500 dark:text-slate-400'">Strict Mode</span>
+                        <span class="text-xs font-medium"
+                            :class="isExtremeMode ? 'text-red-500 dark:text-red-400' : 'text-slate-500 dark:text-slate-400'">Strict
+                            Mode</span>
                         <input type="checkbox" v-model="isExtremeMode" class="hidden">
-                        <div class="w-8 h-4 bg-slate-200 dark:bg-slate-700 rounded-full relative transition border border-transparent group-hover:border-slate-300 dark:group-hover:border-slate-600">
-                            <div class="absolute top-[1px] left-[1px] w-3 h-3 rounded-full bg-white transition-transform shadow-sm" :class="isExtremeMode ? 'translate-x-4 !bg-red-500 shadow-red-500/50' : ''"></div>
+                        <div
+                            class="w-8 h-4 bg-slate-200 dark:bg-slate-700 rounded-full relative transition border border-transparent group-hover:border-slate-300 dark:group-hover:border-slate-600">
+                            <div class="absolute top-[1px] left-[1px] w-3 h-3 rounded-full bg-white transition-transform shadow-sm"
+                                :class="isExtremeMode ? 'translate-x-4 !bg-red-500 shadow-red-500/50' : ''"></div>
                         </div>
                     </label>
                     <div class="h-4 w-px bg-slate-200 dark:bg-slate-800" v-if="currentRoute==='study'"></div>
                     <div class="text-[11px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-2">
                         <span>GLOBAL ACCURACY</span>
-                        <span class="px-2 py-0.5 rounded-md font-semibold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/10 border border-brand-200 dark:border-brand-500/20">{{ globalAccuracy }}%</span>
+                        <span
+                            class="px-2 py-0.5 rounded-md font-semibold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/10 border border-brand-200 dark:border-brand-500/20">{{
+                            globalAccuracy }}%</span>
                     </div>
                 </div>
             </header>
@@ -155,58 +238,85 @@
                     <!-- DASHBOARD -->
                     <div v-if="currentRoute === 'dashboard'" class="animate-fade-in space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="bg-white dark:bg-dark-900 p-6 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                            <div
+                                class="bg-white dark:bg-dark-900 p-6 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
                                 <div class="flex items-center gap-3 mb-4">
-                                    <div class="p-2 bg-slate-50 dark:bg-dark-800 rounded-md text-brand-500 border border-slate-100 dark:border-slate-700">
+                                    <div
+                                        class="p-2 bg-slate-50 dark:bg-dark-800 rounded-md text-brand-500 border border-slate-100 dark:border-slate-700">
                                         <i class="ph-bold ph-target text-xl"></i>
                                     </div>
-                                    <div class="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">Total Attempts</div>
+                                    <div
+                                        class="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                                        Total Attempts</div>
                                 </div>
-                                <div class="text-3xl font-bold text-slate-900 dark:text-white">{{ stats.totalAttempts }}</div>
+                                <div class="text-3xl font-bold text-slate-900 dark:text-white">{{ stats.totalAttempts }}
+                                </div>
                             </div>
-                            
-                            <div class="bg-white dark:bg-dark-900 p-6 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+
+                            <div
+                                class="bg-white dark:bg-dark-900 p-6 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
                                 <div class="flex items-center gap-3 mb-4">
-                                    <div class="p-2 bg-emerald-50 dark:bg-emerald-500/10 rounded-md text-emerald-600 border border-emerald-100 dark:border-emerald-500/20">
+                                    <div
+                                        class="p-2 bg-emerald-50 dark:bg-emerald-500/10 rounded-md text-emerald-600 border border-emerald-100 dark:border-emerald-500/20">
                                         <i class="ph-bold ph-check-circle text-xl"></i>
                                     </div>
-                                    <div class="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">Perfect Hits</div>
+                                    <div
+                                        class="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                                        Perfect Hits</div>
                                 </div>
                                 <div class="text-3xl font-bold text-slate-900 dark:text-white">{{ stats.hits }}</div>
                             </div>
 
-                            <button @click="startDailyDrill" class="bg-brand-600 hover:bg-brand-700 text-left p-6 rounded-lg border border-brand-500 shadow-sm transition group flex flex-col justify-between relative overflow-hidden">
-                                <div class="absolute right-0 top-0 w-32 h-32 bg-white opacity-5 rounded-full blur-2xl -translate-y-10 translate-x-10 group-hover:scale-110 transition-transform"></div>
+                            <button @click="startDailyDrill"
+                                class="bg-brand-600 hover:bg-brand-700 text-left p-6 rounded-lg border border-brand-500 shadow-sm transition group flex flex-col justify-between relative overflow-hidden">
+                                <div
+                                    class="absolute right-0 top-0 w-32 h-32 bg-white opacity-5 rounded-full blur-2xl -translate-y-10 translate-x-10 group-hover:scale-110 transition-transform">
+                                </div>
                                 <div class="flex items-center gap-3 mb-4 relative z-10">
                                     <div class="p-2 bg-white/20 rounded-md text-white border border-white/20">
                                         <i class="ph-bold ph-lightning text-xl"></i>
                                     </div>
-                                    <div class="text-brand-100 text-xs font-semibold uppercase tracking-wider">Quick Action</div>
+                                    <div class="text-brand-100 text-xs font-semibold uppercase tracking-wider">Quick
+                                        Action</div>
                                 </div>
-                                <div class="text-xl font-bold text-white relative z-10">Start Daily Drill <span class="opacity-75 font-normal text-sm ml-1">(20 Items)</span></div>
+                                <div class="text-xl font-bold text-white relative z-10">Start Daily Drill <span
+                                        class="opacity-75 font-normal text-sm ml-1">(20 Items)</span></div>
                             </button>
                         </div>
 
                         <!-- Mistake Tracking Engine -->
-                        <div class="bg-white dark:bg-dark-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm p-6">
-                            <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-2">
-                                <i class="ph-fill ph-warning-circle text-amber-500 text-lg"></i> Priority Learning Targets
+                        <div
+                            class="bg-white dark:bg-dark-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm p-6">
+                            <h3
+                                class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-2">
+                                <i class="ph-fill ph-warning-circle text-amber-500 text-lg"></i> Priority Learning
+                                Targets
                             </h3>
                             <div class="space-y-3">
-                                <div v-for="(task, idx) in weakestTasks" :key="idx" class="flex flex-col md:flex-row md:items-center justify-between p-4 bg-slate-50 dark:bg-dark-950 rounded-md border border-slate-100 dark:border-slate-800 gap-4">
+                                <div v-for="(task, idx) in weakestTasks" :key="idx"
+                                    class="flex flex-col md:flex-row md:items-center justify-between p-4 bg-slate-50 dark:bg-dark-950 rounded-md border border-slate-100 dark:border-slate-800 gap-4">
                                     <div class="flex-1 min-w-0">
-                                        <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 truncate">{{ task.topicTitle }} <span class="mx-1">•</span> {{ task.type }}</div>
-                                        <div class="text-sm font-medium text-slate-700 dark:text-slate-300 truncate" :title="task.prompt">{{ task.prompt }}</div>
+                                        <div
+                                            class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 truncate">
+                                            {{ task.topicTitle }} <span class="mx-1">•</span> {{ task.type }}</div>
+                                        <div class="text-sm font-medium text-slate-700 dark:text-slate-300 truncate"
+                                            :title="task.prompt">{{ task.prompt }}</div>
                                     </div>
                                     <div class="flex items-center gap-4 w-full md:w-48 shrink-0">
-                                        <div class="flex-1 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                                            <div class="h-full bg-amber-500 rounded-full" :style="`width: ${task.accuracy}%`"></div>
+                                        <div
+                                            class="flex-1 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                                            <div class="h-full bg-amber-500 rounded-full"
+                                                :style="`width: ${task.accuracy}%`"></div>
                                         </div>
-                                        <span class="text-xs font-mono font-medium text-slate-600 dark:text-slate-400 w-10 text-right">{{ task.accuracy }}%</span>
+                                        <span
+                                            class="text-xs font-mono font-medium text-slate-600 dark:text-slate-400 w-10 text-right">{{
+                                            task.accuracy }}%</span>
                                     </div>
                                 </div>
-                                <div v-if="weakestTasks.length === 0" class="p-6 text-center border border-dashed border-slate-200 dark:border-slate-700 rounded-md">
-                                    <div class="text-sm text-slate-500 dark:text-slate-400">Insufficient data. Complete drills to identify weak points.</div>
+                                <div v-if="weakestTasks.length === 0"
+                                    class="p-6 text-center border border-dashed border-slate-200 dark:border-slate-700 rounded-md">
+                                    <div class="text-sm text-slate-500 dark:text-slate-400">Insufficient data. Complete
+                                        drills to identify weak points.</div>
                                 </div>
                             </div>
                         </div>
@@ -214,20 +324,26 @@
 
                     <!-- REVISION / CHEAT SHEET MODE -->
                     <div v-if="currentRoute === 'revision'" class="animate-fade-in space-y-6">
-                        <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-dark-900 p-4 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
-                            <p class="text-slate-600 dark:text-slate-400 text-sm">Review configuration structures, commands, and paths without evaluation pressure.</p>
-                            <label class="flex items-center gap-2 cursor-pointer bg-slate-50 dark:bg-dark-950 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-md shrink-0 hover:bg-slate-100 dark:hover:bg-dark-800 transition">
-                                <span class="text-xs font-semibold" :class="showExplanations ? 'text-brand-600 dark:text-brand-400' : 'text-slate-500'">Show Explanations</span>
+                        <header
+                            class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-dark-900 p-4 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
+                            <p class="text-slate-600 dark:text-slate-400 text-sm">Review configuration structures,
+                                commands, and paths without evaluation pressure.</p>
+                            <label
+                                class="flex items-center gap-2 cursor-pointer bg-slate-50 dark:bg-dark-950 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-md shrink-0 hover:bg-slate-100 dark:hover:bg-dark-800 transition">
+                                <span class="text-xs font-semibold"
+                                    :class="showExplanations ? 'text-brand-600 dark:text-brand-400' : 'text-slate-500'">Show
+                                    Explanations</span>
                                 <input type="checkbox" v-model="showExplanations" class="hidden">
                                 <div class="w-7 h-3.5 bg-slate-200 dark:bg-slate-700 rounded-full relative transition">
-                                    <div class="absolute top-[1px] left-[1px] w-3 h-3 rounded-full bg-white shadow-sm transition-transform" :class="showExplanations ? 'translate-x-3.5 !bg-brand-500' : ''"></div>
+                                    <div class="absolute top-[1px] left-[1px] w-3 h-3 rounded-full bg-white shadow-sm transition-transform"
+                                        :class="showExplanations ? 'translate-x-3.5 !bg-brand-500' : ''"></div>
                                 </div>
                             </label>
                         </header>
 
                         <!-- Topic Tabs -->
                         <div class="flex overflow-x-auto gap-1 border-b border-slate-200 dark:border-slate-800 pb-px">
-                            <button v-for="topic in topics" :key="'rev_'+topic.id" 
+                            <button v-for="topic in topics" :key="'rev_'+topic.id"
                                 @click="activeRevisionTopicId = topic.id"
                                 class="px-4 py-2 text-sm font-medium whitespace-nowrap transition border-b-2"
                                 :class="activeRevisionTopicId === topic.id ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'">
@@ -236,55 +352,75 @@
                         </div>
 
                         <div v-if="activeRevisionTopic" class="space-y-6">
-                            <div v-for="(sec, sIdx) in activeRevisionTopic.sections" :key="'rev_sec_'+sIdx" class="bg-white dark:bg-dark-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                                <div class="bg-slate-50 dark:bg-dark-950 px-5 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3">
-                                    <div class="w-5 h-5 rounded flex items-center justify-center font-bold text-[10px] bg-white dark:bg-dark-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 shadow-sm">{{ sIdx + 1 }}</div>
-                                    <h3 class="font-semibold text-slate-800 dark:text-slate-200 text-sm">{{ sec.heading }}</h3>
+                            <div v-for="(sec, sIdx) in activeRevisionTopic.sections" :key="'rev_sec_'+sIdx"
+                                class="bg-white dark:bg-dark-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                                <div
+                                    class="bg-slate-50 dark:bg-dark-950 px-5 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3">
+                                    <div
+                                        class="w-5 h-5 rounded flex items-center justify-center font-bold text-[10px] bg-white dark:bg-dark-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 shadow-sm">
+                                        {{ sIdx + 1 }}</div>
+                                    <h3 class="font-semibold text-slate-800 dark:text-slate-200 text-sm">{{ sec.heading
+                                        }}</h3>
                                 </div>
                                 <div class="p-5 space-y-6">
                                     <div v-for="(item, iIdx) in sec.items" :key="'rev_item_'+iIdx" class="space-y-3">
                                         <div class="flex items-start gap-2">
                                             <i class="ph-bold ph-caret-right text-brand-500 mt-0.5 text-sm"></i>
-                                            <span class="text-slate-700 dark:text-slate-300 font-medium text-sm">{{ item.text }}</span>
+                                            <span class="text-slate-700 dark:text-slate-300 font-medium text-sm">{{
+                                                item.text }}</span>
                                         </div>
-                                        
+
                                         <div v-if="item.path" class="ml-6 flex items-center gap-2">
                                             <i class="ph-duotone ph-folder-open text-slate-400"></i>
-                                            <code class="px-2 py-0.5 bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-300 rounded border border-slate-200 dark:border-slate-700 font-mono text-[11px]">{{ item.path }}</code>
+                                            <code
+                                                class="px-2 py-0.5 bg-slate-100 dark:bg-dark-800 text-slate-600 dark:text-slate-300 rounded border border-slate-200 dark:border-slate-700 font-mono text-[11px]">{{ item.path }}</code>
                                         </div>
-                                        
+
                                         <!-- IDE Pane Mockup -->
-                                        <div v-if="item.commands || item.code" class="ml-6 bg-[#1e1e1e] rounded-md border border-[#333] shadow-inner overflow-hidden flex flex-col">
+                                        <div v-if="item.commands || item.code"
+                                            class="ml-6 bg-[#1e1e1e] rounded-md border border-[#333] shadow-inner overflow-hidden flex flex-col">
                                             <div class="bg-[#2d2d2d] px-3 py-1.5 flex gap-2 border-b border-[#111]">
                                                 <div class="w-2.5 h-2.5 rounded-full bg-[#ff5f56]"></div>
                                                 <div class="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]"></div>
                                                 <div class="w-2.5 h-2.5 rounded-full bg-[#27c93f]"></div>
                                             </div>
-                                            
+
                                             <div class="p-4 font-mono text-[13px] overflow-x-auto leading-relaxed">
                                                 <!-- Commands -->
                                                 <div v-if="item.commands" class="flex flex-col gap-3">
-                                                    <div v-for="(cmdObj, cmdIdx) in item.commands" :key="cmdIdx" class="flex flex-col">
+                                                    <div v-for="(cmdObj, cmdIdx) in item.commands" :key="cmdIdx"
+                                                        class="flex flex-col">
                                                         <div class="flex">
                                                             <span class="text-[#569cd6] mr-2 select-none">$</span>
-                                                            <span class="select-all text-[#d4d4d4]">{{ cmdObj.cmd }}</span>
+                                                            <span class="select-all text-[#d4d4d4]">{{ cmdObj.cmd
+                                                                }}</span>
                                                         </div>
                                                         <div v-show="showExplanations && cmdObj.desc" class="flex mt-1">
-                                                            <span class="w-3 border-l border-b border-[#333] rounded-bl mr-2 mb-1"></span>
-                                                            <span class="code-comment italic text-[11px]">// {{ cmdObj.desc }}</span>
+                                                            <span
+                                                                class="w-3 border-l border-b border-[#333] rounded-bl mr-2 mb-1"></span>
+                                                            <span class="code-comment italic text-[11px]">// {{
+                                                                cmdObj.desc }}</span>
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                <div v-if="item.commands && item.code" class="my-4 border-t border-[#333] w-full"></div>
-                                                
+                                                <div v-if="item.commands && item.code"
+                                                    class="my-4 border-t border-[#333] w-full"></div>
+
                                                 <!-- Configuration Code Blocks -->
                                                 <div v-if="item.code" class="flex flex-col gap-1">
-                                                    <div v-for="(codeObj, cIdx) in item.code" :key="cIdx" class="flex flex-col mb-1">
-                                                        <div class="text-[#d4d4d4] whitespace-pre-wrap select-all"><template v-if="codeObj.line === ''">&nbsp;</template>{{ codeObj.line }}</div>
-                                                        <div v-show="showExplanations && codeObj.desc" class="flex mt-0.5">
-                                                            <span class="w-3 border-l border-b border-[#333] rounded-bl mr-2 mb-1"></span>
-                                                            <span class="code-comment italic text-[11px]">// {{ codeObj.desc }}</span>
+                                                    <div v-for="(codeObj, cIdx) in item.code" :key="cIdx"
+                                                        class="flex flex-col mb-1">
+                                                        <div class="text-[#d4d4d4] whitespace-pre-wrap select-all">
+                                                            <template v-if="codeObj.line === ''">&nbsp;</template>{{
+                                                            codeObj.line }}
+                                                        </div>
+                                                        <div v-show="showExplanations && codeObj.desc"
+                                                            class="flex mt-0.5">
+                                                            <span
+                                                                class="w-3 border-l border-b border-[#333] rounded-bl mr-2 mb-1"></span>
+                                                            <span class="code-comment italic text-[11px]">// {{
+                                                                codeObj.desc }}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -298,11 +434,10 @@
 
                     <!-- STUDY / HARDCORE RECALL MODE -->
                     <div v-if="currentRoute === 'study'" class="animate-fade-in space-y-6">
-                        
+
                         <!-- Topic Tabs -->
                         <div class="flex overflow-x-auto gap-1 border-b border-slate-200 dark:border-slate-800 pb-px">
-                            <button v-for="topic in topics" :key="topic.id" 
-                                @click="activeStudyTopicId = topic.id"
+                            <button v-for="topic in topics" :key="topic.id" @click="activeStudyTopicId = topic.id"
                                 class="px-4 py-2 text-sm font-medium whitespace-nowrap transition border-b-2"
                                 :class="activeStudyTopicId === topic.id ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'">
                                 {{ topic.title }}
@@ -311,57 +446,72 @@
 
                         <!-- Active Recall Cards -->
                         <div class="space-y-4">
-                            <div v-for="(task, idx) in currentStudyTasks" :key="task.id" 
+                            <div v-for="(task, idx) in currentStudyTasks" :key="task.id"
                                 class="bg-white dark:bg-dark-900 rounded-lg border transition-all duration-300 overflow-hidden shadow-sm flex flex-col"
                                 :class="{'ring-1 ring-brand-500 border-brand-500': activeTaskIndex === idx, 'border-slate-200 dark:border-slate-800': !task.status && activeTaskIndex !== idx, 'border-emerald-500 dark:border-emerald-500/50 ring-1 ring-emerald-500/20': task.status==='correct', 'border-amber-500 dark:border-amber-500/50 ring-1 ring-amber-500/20': task.status==='typo', 'border-red-500 dark:border-red-500/50 ring-1 ring-red-500/20': task.status==='wrong'}">
-                                
-                                <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex gap-3 cursor-pointer items-start bg-slate-50/50 dark:bg-dark-900/50" @click="setActiveTask(idx)">
+
+                                <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex gap-3 cursor-pointer items-start bg-slate-50/50 dark:bg-dark-900/50"
+                                    @click="setActiveTask(idx)">
                                     <div class="mt-0.5" :class="getStatusColor(task.status)">
                                         <i class="ph-fill text-lg" :class="getStatusIcon(task.status)"></i>
                                     </div>
                                     <div class="flex-1 min-w-0">
                                         <div class="flex justify-between items-center mb-1">
-                                            <span class="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 tracking-wider">TARGET: {{ task.type }}</span>
-                                            <span class="text-[10px] font-mono font-medium text-slate-500 bg-slate-100 dark:bg-dark-800 px-1.5 py-0.5 rounded">{{ getTaskAccuracy(task.id) }}% Acc</span>
+                                            <span
+                                                class="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 tracking-wider">TARGET:
+                                                {{ task.type }}</span>
+                                            <span
+                                                class="text-[10px] font-mono font-medium text-slate-500 bg-slate-100 dark:bg-dark-800 px-1.5 py-0.5 rounded">{{
+                                                getTaskAccuracy(task.id) }}% Acc</span>
                                         </div>
-                                        <p class="text-sm font-medium text-slate-800 dark:text-slate-200" v-html="task.prompt"></p>
+                                        <p class="text-sm font-medium text-slate-800 dark:text-slate-200"
+                                            v-html="task.prompt"></p>
                                     </div>
                                 </div>
-                                
+
                                 <!-- Editor Area -->
                                 <div class="p-4 bg-white dark:bg-dark-950 flex flex-col gap-3">
                                     <div class="relative rounded-md overflow-hidden border focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500 transition-all"
                                         :class="{'border-emerald-500/50': task.status==='correct', 'border-amber-500/50': task.status==='typo', 'border-red-500/50': task.status==='wrong', 'border-slate-200 dark:border-slate-700': !task.status}">
-                                        
+
                                         <!-- Editor Header -->
-                                        <div class="bg-slate-100 dark:bg-dark-800 px-3 py-1 flex items-center border-b border-slate-200 dark:border-slate-700">
-                                            <span class="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase">Input</span>
+                                        <div
+                                            class="bg-slate-100 dark:bg-dark-800 px-3 py-1 flex items-center border-b border-slate-200 dark:border-slate-700">
+                                            <span
+                                                class="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase">Input</span>
                                         </div>
-                                        
-                                        <textarea 
-                                            :ref="el => { if(el) taskRefs[idx] = el }"
-                                            v-model="task.userAnswer" 
+
+                                        <textarea :ref="el => { if(el) taskRefs[idx] = el }" v-model="task.userAnswer"
                                             :disabled="task.status === 'correct'"
                                             placeholder="Type configuration here..."
                                             class="w-full p-3 bg-[#1e1e1e] text-[#d4d4d4] font-mono text-[13px] resize-none outline-none min-h-[80px]"
-                                            spellcheck="false"
-                                            @focus="activeTaskIndex = idx"
-                                            @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); validateTask(task); }"
-                                        ></textarea>
+                                            spellcheck="false" @focus="activeTaskIndex = idx"
+                                            @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); validateTask(task); }"></textarea>
                                     </div>
-                                    
-                                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                                        <span class="text-[10px] text-slate-500 dark:text-slate-400 font-mono flex items-center gap-1.5"><kbd class="bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-slate-700 px-1 rounded text-slate-600 dark:text-slate-300">ENT</kbd> to Validate, <kbd class="bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-slate-700 px-1 rounded text-slate-600 dark:text-slate-300">⇧+ENT</kbd> for new line</span>
+
+                                    <div
+                                        class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                        <span
+                                            class="text-[10px] text-slate-500 dark:text-slate-400 font-mono flex items-center gap-1.5"><kbd
+                                                class="bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-slate-700 px-1 rounded text-slate-600 dark:text-slate-300">ENT</kbd>
+                                            to Validate, <kbd
+                                                class="bg-slate-100 dark:bg-dark-800 border border-slate-200 dark:border-slate-700 px-1 rounded text-slate-600 dark:text-slate-300">⇧+ENT</kbd>
+                                            for new line</span>
                                         <div class="flex gap-2 w-full sm:w-auto">
-                                            <button v-if="task.status" @click="resetTask(task)" class="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-dark-800 hover:bg-slate-50 dark:hover:bg-dark-700 transition">Retry (R)</button>
-                                            <button v-if="task.status !== 'correct'" @click="validateTask(task)" class="flex-1 sm:flex-none px-4 py-1.5 text-xs font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-md transition shadow-sm">Verify</button>
+                                            <button v-if="task.status" @click="resetTask(task)"
+                                                class="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-dark-800 hover:bg-slate-50 dark:hover:bg-dark-700 transition">Retry
+                                                (R)</button>
+                                            <button v-if="task.status !== 'correct'" @click="validateTask(task)"
+                                                class="flex-1 sm:flex-none px-4 py-1.5 text-xs font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-md transition shadow-sm">Verify</button>
                                         </div>
                                     </div>
 
                                     <!-- Feedback UI -->
-                                    <div v-if="task.status && task.status !== 'correct'" class="mt-1 p-3 rounded-md border font-mono text-[12px] whitespace-pre-wrap"
+                                    <div v-if="task.status && task.status !== 'correct'"
+                                        class="mt-1 p-3 rounded-md border font-mono text-[12px] whitespace-pre-wrap"
                                         :class="task.status === 'typo' ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20 text-amber-700 dark:text-amber-400' : 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400'">
-                                        <div class="font-bold mb-1.5 uppercase text-[10px]">{{ task.status === 'typo' ? 'Minor Typo Detected. Expected:' : 'Critical Failure. Expected:' }}</div>
+                                        <div class="font-bold mb-1.5 uppercase text-[10px]">{{ task.status === 'typo' ?
+                                            'Minor Typo Detected. Expected:' : 'Critical Failure. Expected:' }}</div>
                                         {{ task.expected }}
                                     </div>
                                 </div>
@@ -370,142 +520,188 @@
                     </div>
 
                     <!-- SPEED DRILL -->
-                    <div v-if="currentRoute === 'drill'" class="animate-fade-in flex flex-col items-center justify-center min-h-[60vh]">
-                        <div v-if="!drillActive && drillQueue.length === 0" class="text-center bg-white dark:bg-dark-900 p-10 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm max-w-lg w-full">
-                            <div class="w-16 h-16 bg-brand-50 dark:bg-brand-500/10 rounded-full flex items-center justify-center mx-auto mb-5 text-brand-600 dark:text-brand-400">
+                    <div v-if="currentRoute === 'drill'"
+                        class="animate-fade-in flex flex-col items-center justify-center min-h-[60vh]">
+                        <div v-if="!drillActive && drillQueue.length === 0"
+                            class="text-center bg-white dark:bg-dark-900 p-10 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm max-w-lg w-full">
+                            <div
+                                class="w-16 h-16 bg-brand-50 dark:bg-brand-500/10 rounded-full flex items-center justify-center mx-auto mb-5 text-brand-600 dark:text-brand-400">
                                 <i class="ph-bold ph-lightning text-3xl"></i>
                             </div>
                             <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Speed Drill Mode</h2>
-                            <p class="text-slate-500 dark:text-slate-400 text-sm mb-8">20 random questions. 15 seconds per question. Immediate validation. No mercy.</p>
-                            <button @click="startDailyDrill" class="w-full px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-md shadow-sm transition">Commence Drill</button>
+                            <p class="text-slate-500 dark:text-slate-400 text-sm mb-8">20 random questions. 15 seconds
+                                per question. Immediate validation. No mercy.</p>
+                            <button @click="startDailyDrill"
+                                class="w-full px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-md shadow-sm transition">Commence
+                                Drill</button>
                         </div>
 
                         <div v-else-if="drillActive" class="w-full max-w-2xl">
                             <div class="flex justify-between items-end mb-3">
-                                <div class="text-brand-600 dark:text-brand-400 font-medium text-sm">Question {{ 20 - drillQueue.length + 1 }} of 20</div>
-                                <div class="text-2xl font-mono font-bold" :class="drillTimer < 5 ? 'text-red-500 animate-pulse' : 'text-slate-800 dark:text-white'">00:{{ String(drillTimer).padStart(2, '0') }}</div>
-                            </div>
-                            
-                            <!-- Timer Bar -->
-                            <div class="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mb-6">
-                                <div class="h-full transition-all duration-1000 linear" :class="drillTimer < 5 ? 'bg-red-500' : 'bg-brand-500'" :style="`width: ${(drillTimer / 15) * 100}%`"></div>
+                                <div class="text-brand-600 dark:text-brand-400 font-medium text-sm">Question {{ 20 -
+                                    drillQueue.length + 1 }} of 20</div>
+                                <div class="text-2xl font-mono font-bold"
+                                    :class="drillTimer < 5 ? 'text-red-500 animate-pulse' : 'text-slate-800 dark:text-white'">
+                                    00:{{ String(drillTimer).padStart(2, '0') }}</div>
                             </div>
 
-                            <div class="bg-white dark:bg-dark-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
-                                <div class="p-6 pb-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-dark-950/50">
-                                    <div class="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 tracking-wider mb-2">{{ activeDrillTask.topicTitle }} • {{ activeDrillTask.type }}</div>
-                                    <h3 class="text-lg text-slate-800 dark:text-slate-200 font-medium leading-relaxed" v-html="activeDrillTask.prompt"></h3>
+                            <!-- Timer Bar -->
+                            <div class="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden mb-6">
+                                <div class="h-full transition-all duration-1000 linear"
+                                    :class="drillTimer < 5 ? 'bg-red-500' : 'bg-brand-500'"
+                                    :style="`width: ${(drillTimer / 15) * 100}%`"></div>
+                            </div>
+
+                            <div
+                                class="bg-white dark:bg-dark-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
+                                <div
+                                    class="p-6 pb-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-dark-950/50">
+                                    <div
+                                        class="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 tracking-wider mb-2">
+                                        {{ activeDrillTask.topicTitle }} • {{ activeDrillTask.type }}</div>
+                                    <h3 class="text-lg text-slate-800 dark:text-slate-200 font-medium leading-relaxed"
+                                        v-html="activeDrillTask.prompt"></h3>
                                 </div>
-                                
+
                                 <div class="p-6 bg-white dark:bg-dark-900">
-                                    <div class="relative rounded-md overflow-hidden border border-slate-200 dark:border-slate-700 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500 transition-all">
-                                        <div class="bg-slate-100 dark:bg-dark-800 px-3 py-1 flex items-center border-b border-slate-200 dark:border-slate-700">
-                                            <span class="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase">Terminal Input</span>
+                                    <div
+                                        class="relative rounded-md overflow-hidden border border-slate-200 dark:border-slate-700 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500 transition-all">
+                                        <div
+                                            class="bg-slate-100 dark:bg-dark-800 px-3 py-1 flex items-center border-b border-slate-200 dark:border-slate-700">
+                                            <span
+                                                class="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase">Terminal
+                                                Input</span>
                                         </div>
-                                        <textarea 
-                                            ref="drillInput"
-                                            v-model="activeDrillTask.userAnswer" 
+                                        <textarea ref="drillInput" v-model="activeDrillTask.userAnswer"
                                             @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); submitDrillAnswer(); }"
                                             placeholder="Type your answer here..."
                                             class="w-full p-4 bg-[#1e1e1e] text-[#d4d4d4] font-mono text-[14px] resize-none outline-none min-h-[120px]"
-                                            spellcheck="false"
-                                            :disabled="drillFeedbackStatus !== ''"
-                                        ></textarea>
+                                            spellcheck="false" :disabled="drillFeedbackStatus !== ''"></textarea>
                                     </div>
 
-                                    <div v-if="drillFeedbackStatus" class="mt-4 p-4 rounded-md font-mono text-xs whitespace-pre-wrap border animate-fade-in"
+                                    <div v-if="drillFeedbackStatus"
+                                        class="mt-4 p-4 rounded-md font-mono text-xs whitespace-pre-wrap border animate-fade-in"
                                         :class="drillFeedbackStatus === 'correct' ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-400' : (drillFeedbackStatus === 'typo' ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20 text-amber-700 dark:text-amber-400' : 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400')">
-                                        <div class="font-bold mb-1.5 uppercase text-[10px]">{{ drillFeedbackStatus === 'correct' ? 'VALIDATED' : 'EXPECTED:' }}</div>
-                                        {{ drillFeedbackStatus === 'correct' ? 'Perfect Match.' : activeDrillTask.expected }}
+                                        <div class="font-bold mb-1.5 uppercase text-[10px]">{{ drillFeedbackStatus ===
+                                            'correct' ? 'VALIDATED' : 'EXPECTED:' }}</div>
+                                        {{ drillFeedbackStatus === 'correct' ? 'Perfect Match.' :
+                                        activeDrillTask.expected }}
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="mt-6 flex justify-between items-center px-2">
-                                <div class="text-slate-500 dark:text-slate-400 font-medium text-sm">Score: <span class="text-slate-900 dark:text-white font-bold">{{ drillScore }}</span></div>
-                                <button v-if="drillFeedbackStatus" @click="nextDrillQuestion" class="px-5 py-2 bg-slate-800 hover:bg-slate-700 dark:bg-slate-200 dark:hover:bg-white text-white dark:text-slate-900 font-medium rounded-md text-sm transition focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 dark:focus:ring-offset-dark-900">Next (N)</button>
+                                <div class="text-slate-500 dark:text-slate-400 font-medium text-sm">Score: <span
+                                        class="text-slate-900 dark:text-white font-bold">{{ drillScore }}</span></div>
+                                <button v-if="drillFeedbackStatus" @click="nextDrillQuestion"
+                                    class="px-5 py-2 bg-slate-800 hover:bg-slate-700 dark:bg-slate-200 dark:hover:bg-white text-white dark:text-slate-900 font-medium rounded-md text-sm transition focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 dark:focus:ring-offset-dark-900">Next
+                                    (N)</button>
                             </div>
                         </div>
 
                         <!-- Drill Results -->
-                        <div v-if="!drillActive && drillQueue.length === 0 && drillScore > 0" class="text-center w-full max-w-md bg-white dark:bg-dark-900 p-10 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <div v-if="!drillActive && drillQueue.length === 0 && drillScore > 0"
+                            class="text-center w-full max-w-md bg-white dark:bg-dark-900 p-10 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
                             <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-6">Drill Complete</h2>
-                            <div class="bg-slate-50 dark:bg-dark-950 p-8 rounded-lg border border-slate-100 dark:border-slate-800 mb-8">
-                                <div class="text-5xl font-bold mb-2 font-mono" :class="drillAccuracy >= 80 ? 'text-emerald-500' : (drillAccuracy >= 50 ? 'text-amber-500' : 'text-red-500')">
+                            <div
+                                class="bg-slate-50 dark:bg-dark-950 p-8 rounded-lg border border-slate-100 dark:border-slate-800 mb-8">
+                                <div class="text-5xl font-bold mb-2 font-mono"
+                                    :class="drillAccuracy >= 80 ? 'text-emerald-500' : (drillAccuracy >= 50 ? 'text-amber-500' : 'text-red-500')">
                                     {{ drillAccuracy }}%
                                 </div>
-                                <div class="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">Final Accuracy</div>
+                                <div
+                                    class="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                                    Final Accuracy</div>
                             </div>
-                            <button @click="startDailyDrill" class="w-full px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-md transition">Run Again</button>
+                            <button @click="startDailyDrill"
+                                class="w-full px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-md transition">Run
+                                Again</button>
                         </div>
                     </div>
 
                     <!-- FULL FLOW MEMORY MODE -->
                     <div v-if="currentRoute === 'flow'" class="animate-fade-in space-y-6">
-                        <header class="bg-white dark:bg-dark-900 p-4 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
-                            <p class="text-slate-600 dark:text-slate-400 text-sm">Prove your mastery by writing the complete configuration sequence from zero. No skipping.</p>
+                        <header
+                            class="bg-white dark:bg-dark-900 p-4 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
+                            <p class="text-slate-600 dark:text-slate-400 text-sm">Prove your mastery by writing the
+                                complete configuration sequence from zero. No skipping.</p>
                         </header>
 
                         <!-- Topic Tabs -->
                         <div class="flex overflow-x-auto gap-1 border-b border-slate-200 dark:border-slate-800 pb-px">
-                            <button v-for="topic in topics" :key="'flow_'+topic.id" 
-                                @click="startFlow(topic.id)"
+                            <button v-for="topic in topics" :key="'flow_'+topic.id" @click="startFlow(topic.id)"
                                 class="px-4 py-2 text-sm font-medium whitespace-nowrap transition border-b-2"
                                 :class="activeFlowTopicId === topic.id ? 'border-brand-500 text-brand-600 dark:text-brand-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'">
                                 {{ topic.title }}
                             </button>
                         </div>
 
-                        <div v-if="activeFlowTopicId" class="relative pl-6 sm:pl-8 border-l-2 border-slate-200 dark:border-slate-800 space-y-8 pb-12 ml-2">
+                        <div v-if="activeFlowTopicId"
+                            class="relative pl-6 sm:pl-8 border-l-2 border-slate-200 dark:border-slate-800 space-y-8 pb-12 ml-2">
                             <div v-for="(task, idx) in flowTasks" :key="'ft_'+idx" class="relative">
                                 <!-- Node Dot -->
                                 <div class="absolute -left-[35px] sm:-left-[43px] top-4 w-6 h-6 rounded-full border-4 flex items-center justify-center transition-colors bg-slate-50 dark:bg-dark-950"
                                     :class="getFlowDotClass(task.status, idx)">
-                                    <i v-if="task.status === 'correct'" class="ph-bold ph-check text-emerald-500 text-[10px]"></i>
-                                    <span v-else-if="idx === flowCurrentIndex" class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+                                    <i v-if="task.status === 'correct'"
+                                        class="ph-bold ph-check text-emerald-500 text-[10px]"></i>
+                                    <span v-else-if="idx === flowCurrentIndex"
+                                        class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
                                 </div>
 
                                 <div class="bg-white dark:bg-dark-900 rounded-lg border transition-all"
                                     :class="getFlowCardClass(task.status, idx)">
-                                    
-                                    <div class="p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-dark-950/50 flex flex-col gap-1 rounded-t-lg">
-                                        <div class="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 tracking-wider">Step {{ idx + 1 }} • {{ task.type }}</div>
-                                        <p class="text-slate-800 dark:text-slate-200 font-medium text-sm" :class="{'opacity-50': idx > flowCurrentIndex}">{{ task.prompt }}</p>
+
+                                    <div
+                                        class="p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-dark-950/50 flex flex-col gap-1 rounded-t-lg">
+                                        <div
+                                            class="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 tracking-wider">
+                                            Step {{ idx + 1 }} • {{ task.type }}</div>
+                                        <p class="text-slate-800 dark:text-slate-200 font-medium text-sm"
+                                            :class="{'opacity-50': idx > flowCurrentIndex}">{{ task.prompt }}</p>
                                     </div>
 
                                     <div v-if="idx <= flowCurrentIndex" class="p-5 flex flex-col gap-3">
-                                        <div class="relative rounded-md overflow-hidden border border-slate-200 dark:border-slate-700 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500 transition-all">
-                                            <div class="bg-slate-100 dark:bg-dark-800 px-3 py-1 flex items-center border-b border-slate-200 dark:border-slate-700">
-                                                <span class="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase">Input</span>
+                                        <div
+                                            class="relative rounded-md overflow-hidden border border-slate-200 dark:border-slate-700 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500 transition-all">
+                                            <div
+                                                class="bg-slate-100 dark:bg-dark-800 px-3 py-1 flex items-center border-b border-slate-200 dark:border-slate-700">
+                                                <span
+                                                    class="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase">Input</span>
                                             </div>
-                                            <textarea 
+                                            <textarea
                                                 :ref="el => { if(el && idx === flowCurrentIndex) flowInputRef = el }"
-                                                v-model="task.userAnswer" 
-                                                :disabled="task.status === 'correct'"
+                                                v-model="task.userAnswer" :disabled="task.status === 'correct'"
                                                 @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); if (idx === flowCurrentIndex) validateFlowTask(task, idx); }"
                                                 placeholder="Execute sequence..."
                                                 class="w-full p-3 bg-[#1e1e1e] text-[#d4d4d4] font-mono text-[13px] resize-none outline-none min-h-[60px]"
-                                                spellcheck="false"
-                                            ></textarea>
+                                                spellcheck="false"></textarea>
                                         </div>
-                                        
-                                        <div v-if="task.status && task.status !== 'correct'" class="p-3 rounded-md border font-mono text-xs whitespace-pre-wrap bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400">
-                                            <div class="font-bold mb-1 uppercase text-[10px]">Sequence Break. Expected:</div>
+
+                                        <div v-if="task.status && task.status !== 'correct'"
+                                            class="p-3 rounded-md border font-mono text-xs whitespace-pre-wrap bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400">
+                                            <div class="font-bold mb-1 uppercase text-[10px]">Sequence Break. Expected:
+                                            </div>
                                             {{ task.expected }}
                                         </div>
-                                        
+
                                         <div v-if="idx === flowCurrentIndex" class="flex justify-end gap-2 mt-1">
-                                            <button @click="resetFlowTask(task)" class="px-4 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-dark-800 hover:bg-slate-50 dark:hover:bg-dark-700 transition">Retry (R)</button>
-                                            <button @click="validateFlowTask(task, idx)" class="px-5 py-1.5 text-xs font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-md transition shadow-sm">Commit</button>
+                                            <button @click="resetFlowTask(task)"
+                                                class="px-4 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-dark-800 hover:bg-slate-50 dark:hover:bg-dark-700 transition">Retry
+                                                (R)</button>
+                                            <button @click="validateFlowTask(task, idx)"
+                                                class="px-5 py-1.5 text-xs font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-md transition shadow-sm">Commit</button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div v-if="flowTasks.length > 0 && flowCurrentIndex >= flowTasks.length" class="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 p-8 rounded-lg text-center">
+                            <div v-if="flowTasks.length > 0 && flowCurrentIndex >= flowTasks.length"
+                                class="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 p-8 rounded-lg text-center">
                                 <i class="ph-duotone ph-shield-check text-5xl text-emerald-500 mb-3"></i>
-                                <h3 class="text-xl font-bold text-slate-900 dark:text-white">Sequence Mastery Confirmed</h3>
-                                <p class="text-emerald-700 dark:text-emerald-400 text-sm mt-1 font-medium">All configuration steps deployed successfully.</p>
+                                <h3 class="text-xl font-bold text-slate-900 dark:text-white">Sequence Mastery Confirmed
+                                </h3>
+                                <p class="text-emerald-700 dark:text-emerald-400 text-sm mt-1 font-medium">All
+                                    configuration steps deployed successfully.</p>
                             </div>
                         </div>
                     </div>
@@ -523,299 +719,445 @@
             {
                 id: 'dns_master', title: "1. Serveur DNS (Master)",
                 sections: [
-                    { heading: "Installation et Démarrage", items: [
-                        { text: "Installation de bind.", commands: [{cmd: "dnf install bind", desc: "Installe le paquet du serveur DNS (Bind9)"}] },
-                        { text: "Démarrage du service DNS.", commands: [{cmd: "systemctl start named", desc: "Démarre le service DNS"}] }
-                    ]},
-                    { heading: "Résolution Locale", items: [
-                        { text: "Configuration du DNS local.", path: "/etc/resolv.conf", code: [
-                            { line: "nameserver 127.0.0.1", desc: "Définit le serveur DNS à interroger en priorité (boucle locale)" },
-                            { line: "search ntic.ma", desc: "Domaine de recherche par défaut pour compléter les noms courts" }
-                        ]}
-                    ]},
-                    { heading: "Fichier de configuration principal", items: [
-                        { text: "Configuration de named.conf : Options, Directe, Inverse.", path: "/etc/named.conf", code: [
-                            { line: "options {", desc: "Début du bloc des options globales" },
-                            { line: "    listen-on port 53 { 127.0.0.1; 192.168.10.252; };", desc: "Écoute sur le port 53 via localhost et l'IP du serveur DNS" },
-                            { line: "    allow-query { localhost; any; };", desc: "Autorise les requêtes de la machine locale et de n'importe qui (any)" },
-                            { line: "};", desc: "Fin des options globales" },
-                            { line: "", desc: "" },
-                            { line: "zone \"ntic.ma\" IN {", desc: "Déclaration de la zone DNS directe (nom vers IP)" },
-                            { line: "    type master;", desc: "Indique que ce serveur est le maître pour cette zone" },
-                            { line: "    file \"direct.ntic.ma\";", desc: "Chemin relatif vers le fichier contenant les enregistrements de la zone" },
-                            { line: "};", desc: "Fin de la déclaration de la zone directe" },
-                            { line: "", desc: "" },
-                            { line: "zone \"10.168.192.in-addr.arpa\" IN {", desc: "Déclaration de la zone inverse (IP vers nom)" },
-                            { line: "    type master;", desc: "Indique que ce serveur est le maître pour cette zone inverse" },
-                            { line: "    file \"inverse.ntic.ma\";", desc: "Chemin relatif vers le fichier de la zone inverse" },
-                            { line: "};", desc: "Fin de la déclaration de la zone inverse" }
-                        ]}
-                    ]},
-                    { heading: "Fichiers de Zone", items: [
-                        { text: "Zone Directe (direct.ntic.ma)", path: "/var/named/direct.ntic.ma", code: [
-                            { line: "@   IN  SOA srvdns1.ntic.ma. admin.ntic.ma. (", desc: "Start of Authority : Spécifie le serveur principal et l'email de l'administrateur" },
-                            { line: "        2026010101 ; Serial", desc: "Numéro de série de la zone, à incrémenter après chaque modification" },
-                            { line: "        3600       ; Refresh", desc: "Délai (en sec) pour que les esclaves vérifient les changements" },
-                            { line: "        1800       ; Retry", desc: "Délai avant de retenter si la vérification (Refresh) a échoué" },
-                            { line: "        604800     ; Expire", desc: "Délai après lequel les données sont considérées obsolètes par les esclaves" },
-                            { line: "        86400 )    ; Minimum", desc: "Durée de vie (TTL) minimale par défaut dans le cache" },
-                            { line: "", desc: "" },
-                            { line: "@       IN  NS      srvdns1.ntic.ma.", desc: "Déclare srvdns1 comme Name Server pour ce domaine" },
-                            { line: "srvdns1 IN  A       192.168.10.252", desc: "Enregistrement A (Adresse IPv4) pour la machine srvdns1" },
-                            { line: "ofppt   IN  CNAME   srvdns1.ntic.ma.", desc: "Enregistrement CNAME (Alias) : ofppt pointe vers srvdns1" },
-                            { line: "PC1.ntic.ma IN A    192.168.10.10", desc: "Enregistrement A pour la machine cliente PC1" },
-                            { line: "www     IN  A       192.168.10.30", desc: "Enregistrement A pour le service web www" },
-                            { line: "@       IN  MX  10  mail.ntic.ma.", desc: "Enregistrement MX (Mail Exchange) pointant vers mail.ntic.ma avec priorité 10" }
-                        ]},
-                        { text: "Zone Inverse (inverse.ntic.ma)", path: "/var/named/inverse.ntic.ma", code: [
-                            { line: "SOA record", desc: "L'enregistrement SOA est requis ici (identique à la zone directe)" },
-                            { line: "", desc: "" },
-                            { line: "@   IN  NS  srvdns1.ntic.ma.", desc: "Déclare srvdns1 comme Name Server pour la zone inverse" },
-                            { line: "252 IN  PTR srvdns1.ntic.ma.", desc: "Enregistrement PTR (Pointer) : l'IP finissant par .252 résout vers srvdns1" },
-                            { line: "90  IN  PTR PC1.ntic.ma.", desc: "Enregistrement PTR : l'IP finissant par .90 résout vers PC1" }
-                        ]}
-                    ]},
-                    { heading: "Vérifications", items: [
-                        { text: "Ajouter le service DNS au firewall de façon permanente.", commands: [{cmd: "firewall-cmd --permanent --add-service=dns", desc: "Ouvre le port 53 (DNS) dans le pare-feu de manière permanente"}] },
-                        { text: "Vérifier la syntaxe des configurations.", commands: [{cmd: "named-checkconf", desc: "Vérifie la syntaxe du fichier principal named.conf"}, {cmd: "named-checkzone ntic.ma /var/named/direct.ntic.ma", desc: "Vérifie la syntaxe de la zone directe"}, {cmd: "named-checkzone 10.168.192.in-addr.arpa /var/named/inverse.ntic.ma", desc: "Vérifie la syntaxe de la zone inverse"}] }
-                    ]}
+                    {
+                        heading: "Installation et Démarrage", items: [
+                            { text: "Installation de bind.", commands: [{ cmd: "dnf install bind bind-utils", desc: "Installe le paquet du serveur DNS (Bind9) et les outils de diagnostic" }] },
+                            { text: "Démarrage du service DNS.", commands: [{ cmd: "systemctl enable --now named", desc: "Démarre le service DNS et l'active au démarrage du système" }] }
+                        ]
+                    },
+                    {
+                        heading: "Résolution Locale", items: [
+                            {
+                                text: "Configuration du DNS local.", path: "/etc/resolv.conf", code: [
+                                    { line: "nameserver 127.0.0.1", desc: "Définit le serveur DNS à interroger en priorité (boucle locale)" },
+                                    { line: "search ntic.ma", desc: "Domaine de recherche par défaut pour compléter les noms courts" }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        heading: "Fichier de configuration principal", items: [
+                            {
+                                text: "Configuration de named.conf : Options, Directe, Inverse.", path: "/etc/named.conf", code: [
+                                    { line: "options {", desc: "Début du bloc des options globales" },
+                                    { line: "    listen-on port 53 { 127.0.0.1; 192.168.10.252; };", desc: "Écoute sur le port 53 via localhost et l'IP du serveur DNS" },
+                                    { line: "    allow-query { localhost; any; };", desc: "Autorise les requêtes de la machine locale et de n'importe qui (any)" },
+                                    { line: "};", desc: "Fin des options globales" },
+                                    { line: "", desc: "" },
+                                    { line: "zone \"ntic.ma\" IN {", desc: "Déclaration de la zone DNS directe (nom vers IP)" },
+                                    { line: "    type master;", desc: "Indique que ce serveur est le maître pour cette zone" },
+                                    { line: "    file \"direct.ntic.ma\";", desc: "Chemin relatif vers le fichier contenant les enregistrements de la zone" },
+                                    { line: "};", desc: "Fin de la déclaration de la zone directe" },
+                                    { line: "", desc: "" },
+                                    { line: "zone \"10.168.192.in-addr.arpa\" IN {", desc: "Déclaration de la zone inverse (IP vers nom)" },
+                                    { line: "    type master;", desc: "Indique que ce serveur est le maître pour cette zone inverse" },
+                                    { line: "    file \"inverse.ntic.ma\";", desc: "Chemin relatif vers le fichier de la zone inverse" },
+                                    { line: "};", desc: "Fin de la déclaration de la zone inverse" }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        heading: "Fichiers de Zone", items: [
+                            {
+                                text: "Zone Directe (direct.ntic.ma)", path: "/var/named/direct.ntic.ma", code: [
+                                    { line: "$TTL 86400", desc: "Définit la durée de vie (TTL) par défaut pour tous les enregistrements de la zone" },
+                                    { line: "@   IN  SOA srvdns1.ntic.ma. admin.ntic.ma. (", desc: "Start of Authority : Spécifie le serveur principal et l'email de l'administrateur" },
+                                    { line: "        2026010101 ; Serial", desc: "Numéro de série de la zone, à incrémenter après chaque modification" },
+                                    { line: "        3600       ; Refresh", desc: "Délai (en sec) pour que les esclaves vérifient les changements" },
+                                    { line: "        1800       ; Retry", desc: "Délai avant de retenter si la vérification (Refresh) a échoué" },
+                                    { line: "        604800     ; Expire", desc: "Délai après lequel les données sont considérées obsolètes par les esclaves" },
+                                    { line: "        86400 )    ; Minimum", desc: "Durée de vie (TTL) minimale par défaut dans le cache" },
+                                    { line: "", desc: "" },
+                                    { line: "@       IN  NS      srvdns1.ntic.ma.", desc: "Déclare srvdns1 comme Name Server pour ce domaine" },
+                                    { line: "@       IN  MX  10  mail.ntic.ma.", desc: "Enregistrement MX (Mail Exchange) pointant vers mail.ntic.ma avec priorité 10" },
+                                    { line: "", desc: "" },
+                                    { line: "srvdns1 IN  A       192.168.10.252", desc: "Enregistrement A (Adresse IPv4) pour la machine srvdns1" },
+                                    { line: "ofppt   IN  CNAME   srvdns1", desc: "Enregistrement CNAME (Alias) : ofppt pointe vers srvdns1" },
+                                    { line: "PC1     IN  A       192.168.10.10", desc: "Enregistrement A pour la machine cliente PC1" },
+                                    { line: "www     IN  A       192.168.10.30", desc: "Enregistrement A pour le service web www" },
+                                    { line: "mail    IN  A       192.168.10.40", desc: "Enregistrement A pour le serveur de messagerie" }
+                                ]
+                            },
+                            {
+                                text: "Zone Inverse (inverse.ntic.ma)", path: "/var/named/inverse.ntic.ma", code: [
+                                    { line: "$TTL 86400", desc: "Définit la durée de vie (TTL) par défaut" },
+                                    { line: "@   IN  SOA srvdns1.ntic.ma. admin.ntic.ma. (", desc: "Start of Authority" },
+                                    { line: "        2026010101 ; Serial", desc: "Série" },
+                                    { line: "        3600       ; Refresh", desc: "Rafraîchissement" },
+                                    { line: "        1800       ; Retry", desc: "Nouvel essai" },
+                                    { line: "        604800     ; Expire", desc: "Expiration" },
+                                    { line: "        86400 )    ; Minimum", desc: "Minimum" },
+                                    { line: "", desc: "" },
+                                    { line: "@   IN  NS  srvdns1.ntic.ma.", desc: "Déclare srvdns1 comme Name Server pour la zone inverse" },
+                                    { line: "252 IN  PTR srvdns1.ntic.ma.", desc: "Enregistrement PTR (Pointer) : l'IP finissant par .252 résout vers srvdns1" },
+                                    { line: "10  IN  PTR PC1.ntic.ma.", desc: "Enregistrement PTR : l'IP finissant par .10 résout vers PC1" },
+                                    { line: "30  IN  PTR www.ntic.ma.", desc: "Enregistrement PTR : l'IP finissant par .30 résout vers www" },
+                                    { line: "40  IN  PTR mail.ntic.ma.", desc: "Enregistrement PTR : l'IP finissant par .40 résout vers mail" }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        heading: "Vérifications", items: [
+                            { text: "Ajouter le service DNS au firewall de façon permanente.", commands: [{ cmd: "firewall-cmd --permanent --add-service=dns", desc: "Ouvre le port 53 (DNS) dans le pare-feu de manière permanente" }, { cmd: "firewall-cmd --reload", desc: "Recharge le pare-feu pour appliquer les changements" }] },
+                            { text: "Vérifier la syntaxe et appliquer.", commands: [{ cmd: "named-checkconf", desc: "Vérifie la syntaxe du fichier principal named.conf" }, { cmd: "named-checkzone ntic.ma /var/named/direct.ntic.ma", desc: "Vérifie la syntaxe de la zone directe" }, { cmd: "named-checkzone 10.168.192.in-addr.arpa /var/named/inverse.ntic.ma", desc: "Vérifie la syntaxe de la zone inverse" }, { cmd: "systemctl restart named", desc: "Redémarre le service pour charger la nouvelle configuration" }] }
+                        ]
+                    }
                 ]
             },
             {
                 id: 'dns_slave', title: "2. DNS Esclave et DDNS",
                 sections: [
-                    { heading: "Réseau Slave", items: [
-                        { text: "Modification de l'interface ens160 via nmcli.", commands: [{cmd: "nmcli con modify type ethernet ifname ens160 ipv4.addresses 192.168.10.5/24 ipv4.gateway 192.168.10.1 ipv4.dns \"192.168.10.252, 127.0.0.1\"", desc: "Configure l'adresse IP statique, la passerelle et les serveurs DNS pour l'interface ens160"}] }
-                    ]},
-                    { heading: "Résolution Slave", items: [
-                        { text: "Configuration du resolv.conf du slave.", path: "/etc/resolv.conf", code: [
-                            { line: "nameserver 192.168.10.252", desc: "Serveur DNS primaire distant" },
-                            { line: "nameserver 127.0.0.1", desc: "Serveur DNS local (slave) en fallback" },
-                            { line: "search ntic.ma", desc: "Domaine de recherche par défaut" }
-                        ]}
-                    ]},
-                    { heading: "Configuration du DNS Esclave", items: [
-                        { text: "Déclaration des zones slaves dans le fichier principal.", path: "/etc/named.conf", code: [
-                            { line: "zone \"ntic.ma\" IN {", desc: "Déclaration de la zone directe" },
-                            { line: "    type slave;", desc: "Spécifie que ce serveur est un esclave et ne fait que lire la zone" },
-                            { line: "    file \"slaves/direct.ntic.ma.slave\";", desc: "Chemin local où sera stockée la copie de la zone transférée" },
-                            { line: "    masters { 192.168.10.252; };", desc: "Adresse IP du serveur principal (master) depuis lequel récupérer la zone" },
-                            { line: "};", desc: "Fin de la zone directe" },
-                            { line: "", desc: "" },
-                            { line: "zone \"10.168.192.in-addr.arpa\" IN {", desc: "Déclaration de la zone inverse" },
-                            { line: "    type slave;", desc: "Spécifie que ce serveur est un esclave" },
-                            { line: "    file \"slaves/inverse.ntic.ma.slave\";", desc: "Chemin local pour la copie de la zone inverse" },
-                            { line: "    masters { 192.168.10.252; };", desc: "Adresse IP du serveur principal (master)" },
-                            { line: "};", desc: "Fin de la zone inverse" }
-                        ]}
-                    ]},
-                    { heading: "DDNS", items: [
-                        { text: "Côté DNS: Ajout d'options dans named.conf.", path: "/etc/named.conf", code: [
-                            { line: "allow-update { any; }; // ou localhost", desc: "Autorise les mises à jour dynamiques (DDNS) des enregistrements de la zone" },
-                            { line: "recursion yes;", desc: "Autorise le serveur à résoudre des requêtes en interrogeant d'autres DNS si nécessaire" }
-                        ]},
-                        { text: "Côté DHCP: Activation du DDNS et spécification des zones autoritaires.", path: "/etc/dhcp/dhcpd.conf", code: [
-                            { line: "authoritative;", desc: "Déclare que ce serveur DHCP fait autorité sur le réseau local" },
-                            { line: "ddns-updates on;", desc: "Active la mise à jour dynamique du DNS (DDNS)" },
-                            { line: "ddns-update-style interim;", desc: "Spécifie la méthode standard utilisée pour les mises à jour" },
-                            { line: "deny client-updates;", desc: "Empêche les postes clients de mettre à jour le DNS eux-mêmes" },
-                            { line: "", desc: "" },
-                            { line: "ddns-domainname \"srvdns1.ntic.ma\";", desc: "Nom du domaine DNS cible pour les mises à jour" },
-                            { line: "ddns-rev-domainname \"10.168.192.in-addr.arpa\";", desc: "Zone DNS inverse cible pour les mises à jour" },
-                            { line: "", desc: "" },
-                            { line: "zone srvdns1.ntic.ma. {", desc: "Déclare la zone DNS directe spécifique à lier" },
-                            { line: "    primary 192.168.10.252;", desc: "Adresse du serveur DNS primaire qui doit recevoir la mise à jour" },
-                            { line: "}", desc: "Fin de la zone" },
-                            { line: "", desc: "" },
-                            { line: "zone 10.168.192.in-addr.arpa. {", desc: "Déclare la zone DNS inverse à lier" },
-                            { line: "    primary 192.168.10.252;", desc: "Adresse du serveur DNS primaire" },
-                            { line: "}", desc: "Fin de la zone" }
-                        ]}
-                    ]}
+                    {
+                        heading: "Réseau Slave", items: [
+                            { text: "Modification de l'interface ens160 via nmcli.", commands: [{ cmd: "nmcli con modify ens160 ipv4.method manual ipv4.addresses 192.168.10.5/24 ipv4.gateway 192.168.10.1 ipv4.dns \"192.168.10.252 127.0.0.1\"", desc: "Configure l'adresse IP statique (manual), la passerelle et les serveurs DNS (séparés par espace)" }, { cmd: "nmcli con up ens160", desc: "Activer l'interface pour appliquer les changements" }] }
+                        ]
+                    },
+                    {
+                        heading: "Résolution Slave", items: [
+                            {
+                                text: "Configuration du resolv.conf du slave.", path: "/etc/resolv.conf", code: [
+                                    { line: "nameserver 192.168.10.252", desc: "Serveur DNS primaire distant" },
+                                    { line: "nameserver 127.0.0.1", desc: "Serveur DNS local (slave) en fallback" },
+                                    { line: "search ntic.ma", desc: "Domaine de recherche par défaut" }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        heading: "Configuration du DNS Esclave", items: [
+                            {
+                                text: "Déclaration des zones slaves dans le fichier principal.", path: "/etc/named.conf", code: [
+                                    { line: "zone \"ntic.ma\" IN {", desc: "Déclaration de la zone directe" },
+                                    { line: "    type slave;", desc: "Spécifie que ce serveur est un esclave et ne fait que lire la zone" },
+                                    { line: "    file \"slaves/direct.ntic.ma.slave\";", desc: "Chemin local où sera stockée la copie de la zone transférée" },
+                                    { line: "    masters { 192.168.10.252; };", desc: "Adresse IP du serveur principal (master) depuis lequel récupérer la zone" },
+                                    { line: "};", desc: "Fin de la zone directe" },
+                                    { line: "", desc: "" },
+                                    { line: "zone \"10.168.192.in-addr.arpa\" IN {", desc: "Déclaration de la zone inverse" },
+                                    { line: "    type slave;", desc: "Spécifie que ce serveur est un esclave" },
+                                    { line: "    file \"slaves/inverse.ntic.ma.slave\";", desc: "Chemin local pour la copie de la zone inverse" },
+                                    { line: "    masters { 192.168.10.252; };", desc: "Adresse IP du serveur principal (master)" },
+                                    { line: "};", desc: "Fin de la zone inverse" }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        heading: "DDNS", items: [
+                            {
+                                text: "Côté DNS: Ajout d'options dans named.conf.", path: "/etc/named.conf", code: [
+                                    { line: "zone \"ntic.ma\" IN {", desc: "Dans le bloc de zone spécifique (Master)" },
+                                    { line: "    allow-update { 192.168.10.x; }; // IP du serveur DHCP", desc: "Autorise les mises à jour dynamiques uniquement pour le DHCP" },
+                                    { line: "};", desc: "" }
+                                ]
+                            },
+                            {
+                                text: "Côté DHCP: Activation du DDNS et spécification des zones autoritaires.", path: "/etc/dhcp/dhcpd.conf", code: [
+                                    { line: "authoritative;", desc: "Déclare que ce serveur DHCP fait autorité sur le réseau local" },
+                                    { line: "ddns-updates on;", desc: "Active la mise à jour dynamique du DNS (DDNS)" },
+                                    { line: "ddns-update-style interim;", desc: "Spécifie la méthode standard utilisée pour les mises à jour" },
+                                    { line: "deny client-updates;", desc: "Empêche les postes clients de mettre à jour le DNS eux-mêmes" },
+                                    { line: "", desc: "" },
+                                    { line: "ddns-domainname \"ntic.ma.\";", desc: "Nom du domaine DNS global cible" },
+                                    { line: "ddns-rev-domainname \"in-addr.arpa.\";", desc: "Suffixe pour la zone inverse" },
+                                    { line: "", desc: "" },
+                                    { line: "zone ntic.ma. {", desc: "Déclare la zone DNS directe" },
+                                    { line: "    primary 192.168.10.252;", desc: "Adresse du serveur DNS maître" },
+                                    { line: "}", desc: "" },
+                                    { line: "", desc: "" },
+                                    { line: "zone 10.168.192.in-addr.arpa. {", desc: "Déclare la zone DNS inverse" },
+                                    { line: "    primary 192.168.10.252;", desc: "Adresse du serveur DNS maître" },
+                                    { line: "}", desc: "" }
+                                ]
+                            }
+                        ]
+                    }
                 ]
             },
             {
                 id: 'dhcp', title: "3. Serveur DHCP & Relais",
                 sections: [
-                    { heading: "Serveur DHCP", items: [
-                        { text: "Installation de dhcp-server.", commands: [{cmd: "dnf install dhcp-server", desc: "Installe le service serveur DHCP"}] },
-                        { text: "Configuration du subnet et de la plage d'IP.", path: "/etc/dhcp/dhcpd.conf", code: [
-                            { line: "subnet 192.168.10.0 netmask 255.255.255.0 {", desc: "Déclaration du sous-réseau avec son adresse et son masque réseau" },
-                            { line: "    range 192.168.10.10 192.168.10.20;", desc: "Définit la plage d'adresses IP (pool) à distribuer dynamiquement" },
-                            { line: "    option routers 192.168.10.1;", desc: "Distribue l'adresse de la passerelle par défaut aux clients" },
-                            { line: "    option domain-name-servers 8.8.8.8;", desc: "Distribue l'adresse des serveurs DNS aux clients" },
-                            { line: "    option domain-name \"ntic.local\";", desc: "Distribue le suffixe de nom de domaine aux clients" },
-                            { line: "    default-lease-time 2400;", desc: "Définit la durée du bail IP par défaut (en secondes)" },
-                            { line: "}", desc: "Fin de la déclaration du sous-réseau" }
-                        ]},
-                        { text: "Réservation DHCP par MAC.", code: [
-                            { line: "host client {", desc: "Ouvre un bloc pour une machine spécifique nommée 'client'" },
-                            { line: "    hardware ethernet [MAC@];", desc: "Indique l'adresse physique (MAC) exacte de cette machine" },
-                            { line: "    fixed-address [@Reserved];", desc: "Définit l'adresse IP fixe qui lui sera toujours attribuée" },
-                            { line: "}", desc: "Fin du bloc hôte" }
-                        ]}
-                    ]},
-                    { heading: "DHCP-Relay", items: [
-                        { text: "Fichier de configuration du relais.", path: "/etc/sysconfig/dhcrelay", code: [
-                            { line: "INTERFACES=\"[interface]\"", desc: "Spécifie l'interface réseau sur laquelle écouter les requêtes DHCP Broadcast" },
-                            { line: "DHCPSERVERS=\"[@DHCP Server]\"", desc: "Spécifie l'adresse IP du véritable serveur DHCP auquel relayer les requêtes" }
-                        ]},
-                        { text: "Service associé au relais DHCP.", commands: [{cmd: "cp /lib/systemd/system/dhcrelay.service /etc/systemd/system/", desc: "Copie le fichier de service du relais DHCP pour modification locale"}] },
-                        { text: "Activation du routage IPv4 (ip_forward).", path: "/proc/sys/net/ipv4/ip_forward", commands: [{cmd: "echo 1 > /proc/sys/net/ipv4/ip_forward", desc: "Active le routage IP (IP forwarding) à la volée"}] }
-                    ]}
+                    {
+                        heading: "Serveur DHCP", items: [
+                            { text: "Installation de dhcp-server.", commands: [{ cmd: "dnf install dhcp-server", desc: "Installe le service serveur DHCP" }] },
+                            {
+                                text: "Configuration du subnet et de la plage d'IP.", path: "/etc/dhcp/dhcpd.conf", code: [
+                                    { line: "subnet 192.168.10.0 netmask 255.255.255.0 {", desc: "Déclaration du sous-réseau avec son adresse et son masque réseau" },
+                                    { line: "    range 192.168.10.10 192.168.10.20;", desc: "Définit la plage d'adresses IP (pool) à distribuer dynamiquement" },
+                                    { line: "    option routers 192.168.10.1;", desc: "Distribue l'adresse de la passerelle par défaut aux clients" },
+                                    { line: "    option domain-name-servers 8.8.8.8;", desc: "Distribue l'adresse des serveurs DNS aux clients" },
+                                    { line: "    option domain-name \"ntic.local\";", desc: "Distribue le suffixe de nom de domaine aux clients" },
+                                    { line: "    default-lease-time 2400;", desc: "Définit la durée du bail IP par défaut (en secondes)" },
+                                    { line: "    max-lease-time 7200;", desc: "Définit la durée maximale du bail" },
+                                    { line: "}", desc: "Fin de la déclaration du sous-réseau" }
+                                ]
+                            },
+                            {
+                                text: "Réservation DHCP par MAC.", code: [
+                                    { line: "host client1 {", desc: "Ouvre un bloc pour une machine spécifique nommée 'client1'" },
+                                    { line: "    hardware ethernet 08:00:27:A1:B2:C3;", desc: "Indique l'adresse physique (MAC) avec : comme séparateurs" },
+                                    { line: "    fixed-address 192.168.10.50;", desc: "Définit l'adresse IP fixe réservée" },
+                                    { line: "}", desc: "Fin du bloc hôte" }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        heading: "DHCP-Relay", items: [
+                            { text: "Copie et modification du service relais.", commands: [{ cmd: "cp /lib/systemd/system/dhcrelay.service /etc/systemd/system/", desc: "Copie le fichier de service pour modification locale" }, { line: "ExecStart=/usr/sbin/dhcrelay -d --no-pid -i ens160 192.168.10.x", desc: "Éditer la ligne ExecStart dans /etc/systemd/system/dhcrelay.service" }] },
+                            { text: "Démarrage du relais.", commands: [{ cmd: "systemctl daemon-reload", desc: "Prend en compte la modification du fichier service" }, { cmd: "systemctl enable --now dhcrelay", desc: "Démarre et active le relais DHCP" }] },
+                            { text: "Activation du routage IPv4 (permanent).", path: "/etc/sysctl.d/99-ipforward.conf", commands: [{ cmd: "echo \"net.ipv4.ip_forward = 1\" > /etc/sysctl.d/99-ipforward.conf", desc: "Active le routage de façon persistante" }, { cmd: "sysctl -p /etc/sysctl.d/99-ipforward.conf", desc: "Applique la configuration sysctl immédiatement" }] }
+                        ]
+                    }
                 ]
             },
             {
                 id: 'ssh', title: "4. SSH & RSA",
                 sections: [
-                    { heading: "Serveur SSH", items: [
-                        { text: "Installation du paquet openssh.", commands: [{cmd: "dnf install openssh", desc: "Installe le paquet client/serveur SSH"}] },
-                        { text: "Configuration SSH (Port 22 par défaut).", path: "/etc/ssh/sshd_config", code: [
-                            { line: "ListenAddress 192.168.10.10", desc: "Spécifie l'adresse IP sur laquelle le serveur SSH accepte les connexions" },
-                            { line: "PermitRootLogin yes", desc: "Autorise la connexion directe en tant que superutilisateur (root) via SSH" }
-                        ]}
-                    ]},
-                    { heading: "Commandes Clientes", items: [
-                        { text: "Se connecter en SSH.", commands: [{cmd: "ssh root@192.168.10.10", desc: "Se connecte à distance au serveur en tant qu'utilisateur root"}] },
-                        { text: "SCP (Télécharger : Serveur vers Client).", commands: [{cmd: "scp root@192.168.10.10:/root/test_download.txt .", desc: "Télécharge un fichier distant vers le répertoire local actuel (.)"}] },
-                        { text: "SCP (Envoyer : Client vers Serveur).", commands: [{cmd: "scp /home/client1/test_send.txt root@192.168.10.10:/root/", desc: "Envoie un fichier local vers le répertoire /root/ du serveur"}] }
-                    ]},
-                    { heading: "Authentification SSH + RSA", items: [
-                        { text: "Création de la paire de clés RSA 2048 bits.", commands: [{cmd: "ssh-keygen -t rsa -b 2048 -C \"root@192.168.10.10\"", desc: "Génère une paire de clés RSA de 2048 bits avec un commentaire"}] },
-                        { text: "Exporter la clé publique vers le serveur distant.", commands: [{cmd: "ssh-copy-id -i ~/.ssh/id_rsa.pub root@192.168.10.10", desc: "Copie la clé publique locale vers le fichier authorized_keys du serveur"}] },
-                        { text: "Activer l'authentification par clés côté serveur.", path: "/etc/ssh/sshd_config", code: [
-                            { line: "PubkeyAuthentication yes", desc: "Active l'authentification sécurisée par clés publiques" },
-                            { line: "AuthorizedKeysFile .ssh/authorized_keys", desc: "Chemin vers le fichier contenant la liste des clés publiques autorisées" }
-                        ]}
-                    ]}
+                    {
+                        heading: "Serveur SSH", items: [
+                            { text: "Installation des paquets SSH.", commands: [{ cmd: "dnf install openssh-server openssh-clients", desc: "Installe le serveur et le client SSH" }, { cmd: "systemctl enable --now sshd", desc: "Active et démarre le service SSH (sshd)" }] },
+                            {
+                                text: "Configuration SSH sécurisée.", path: "/etc/ssh/sshd_config", code: [
+                                    { line: "ListenAddress 192.168.10.10", desc: "Écoute sur l'IP spécifiée uniquement" },
+                                    { line: "PermitRootLogin prohibit-password", desc: "Sécurité: autorise root uniquement par clé, pas par mot de passe" }
+                                ]
+                            },
+                            { text: "Appliquer la configuration.", commands: [{ cmd: "systemctl reload sshd", desc: "Recharge le service pour appliquer les changements sans déconnexion" }] }
+                        ]
+                    },
+                    {
+                        heading: "Commandes Clientes", items: [
+                            { text: "Se connecter en SSH.", commands: [{ cmd: "ssh root@192.168.10.10", desc: "Se connecte à distance au serveur en tant qu'utilisateur root" }] },
+                            { text: "SCP (Télécharger : Serveur vers Client).", commands: [{ cmd: "scp root@192.168.10.10:/root/test_download.txt .", desc: "Télécharge un fichier distant vers le répertoire local actuel (.)" }] },
+                            { text: "SCP (Envoyer : Client vers Serveur).", commands: [{ cmd: "scp /home/client1/test_send.txt root@192.168.10.10:/root/", desc: "Envoie un fichier local vers le répertoire /root/ du serveur" }] }
+                        ]
+                    },
+                    {
+                        heading: "Authentification SSH + Clés", items: [
+                            { text: "Création de la paire de clés RSA 2048 bits.", commands: [{ cmd: "ssh-keygen -t rsa -b 2048 -C \"root@192.168.10.10\"", desc: "Génère une paire de clés RSA 2048 bits" }] },
+                            { text: "Exporter la clé publique vers le serveur distant.", commands: [{ cmd: "ssh-copy-id -i ~/.ssh/id_rsa.pub root@192.168.10.10", desc: "Exporte la clé vers le serveur" }] },
+                            {
+                                text: "Activer l'authentification par clés côté serveur.", path: "/etc/ssh/sshd_config", code: [
+                                    { line: "PubkeyAuthentication yes", desc: "Active l'auth par clé" },
+                                    { line: "AuthorizedKeysFile .ssh/authorized_keys", desc: "Fichier des clés" }
+                                ]
+                            },
+                            { text: "Recharger après vérification.", commands: [{ cmd: "systemctl reload sshd", desc: "Applique" }] }
+                        ]
+                    }
                 ]
             },
             {
                 id: 'apache', title: "5. Serveur Web Apache",
                 sections: [
-                    { heading: "Installation et Dossiers", items: [
-                        { text: "Installation de httpd.", commands: [{cmd: "dnf install httpd", desc: "Installe le serveur web Apache"}] },
-                        { text: "Création des répertoires pour les logs et les racines HTML.", commands: [{cmd: "mkdir -p /var/log/httpd/{afppt,ntic}", desc: "Crée les dossiers de logs pour les deux sites simultanément"}, {cmd: "mkdir -p /var/www/html/site{1,2}", desc: "Crée les dossiers racines pour les deux sites simultanément"}] }
-                    ]},
-                    { heading: "Résolution locale (/etc/hosts)", items: [
-                        { text: "Fichier /etc/hosts pour faire pointer les noms locaux.", path: "/etc/hosts", code: [
-                            { line: "192.168.10.252 ntic.com", desc: "Résolution locale : force le nom ntic.com vers l'IP locale" },
-                            { line: "192.168.10.252 www.ntic.com", desc: "Résolution locale pour le sous-domaine www.ntic.com" },
-                            { line: "192.168.10.252 afppt.com", desc: "Résolution locale : force le nom afppt.com vers l'IP locale" },
-                            { line: "192.168.10.252 www.afppt.com", desc: "Résolution locale pour le sous-domaine www.afppt.com" }
-                        ]}
-                    ]},
-                    { heading: "Fichiers Vhosts", items: [
-                        { text: "Exemple de configuration d'un VirtualHost pour afppt.", path: "/etc/httpd/conf.d/vhost1.conf", code: [
-                            { line: "<VirtualHost *:80>", desc: "Début de la déclaration du VirtualHost écoutant sur le port 80 (HTTP)" },
-                            { line: "    ServerName afppt.com", desc: "Définit le nom de domaine principal de ce site web" },
-                            { line: "    ServerAlias www.afppt.com", desc: "Définit un alias permettant d'accéder au même site avec 'www'" },
-                            { line: "    ServerAdmin admin@ntic.ma", desc: "Email de l'administrateur affiché en cas d'erreur de serveur" },
-                            { line: "    DocumentRoot /var/www/html/site1/", desc: "Dossier racine contenant tous les fichiers (ex: index.html) du site" },
-                            { line: "    ErrorLog /var/log/httpd/afppt/error.log", desc: "Chemin vers le fichier journal spécifique recensant les erreurs de ce site" },
-                            { line: "</VirtualHost>", desc: "Fin de la déclaration du VirtualHost" }
-                        ]}
-                    ]}
+                    {
+                        heading: "Installation et Dossiers", items: [
+                            { text: "Installation de httpd et création des pages de test.", commands: [{ cmd: "dnf install httpd", desc: "Installe le serveur web Apache" }, { cmd: "mkdir -p /var/log/httpd/{afppt,ntic}", desc: "Crée les dossiers de logs" }, { cmd: "mkdir -p /var/www/html/site{1,2}", desc: "Crée les dossiers racines" }, { cmd: "echo \"<h1>Bienvenue sur le site AFPPT</h1>\" > /var/www/html/site1/index.html", desc: "Page de test afppt" }, { cmd: "echo \"<h1>Bienvenue sur le site NTIC</h1>\" > /var/www/html/site2/index.html", desc: "Page de test ntic" }] }
+                        ]
+                    },
+                    {
+                        heading: "Résolution locale (/etc/hosts)", items: [
+                            {
+                                text: "Fichier /etc/hosts pour faire pointer les noms locaux.", path: "/etc/hosts", code: [
+                                    { line: "192.168.10.252 ntic.com www.ntic.com afppt.com www.afppt.com", desc: "Regroupement des domaines sur une seule ligne pour la clarté" }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        heading: "Fichiers Vhosts", items: [
+                            {
+                                text: "Exemple de configuration d'un VirtualHost pour afppt.", path: "/etc/httpd/conf.d/vhost1.conf", code: [
+                                    { line: "<VirtualHost *:80>", desc: "Début du VirtualHost (Port 80)" },
+                                    { line: "    ServerName afppt.com", desc: "Nom de domaine principal" },
+                                    { line: "    ServerAlias www.afppt.com", desc: "Alias avec www" },
+                                    { line: "    ServerAdmin admin@ntic.ma", desc: "Email admin" },
+                                    { line: "    DocumentRoot /var/www/html/site1", desc: "Dossier racine (sans slash final)" },
+                                    { line: "    ErrorLog /var/log/httpd/afppt/error.log", desc: "Journal d'erreurs" },
+                                    { line: "    CustomLog /var/log/httpd/afppt/access.log combined", desc: "Journal d'accès au format standard combined" },
+                                    { line: "</VirtualHost>", desc: "Fin du VirtualHost" }
+                                ]
+                            }
+                        ]
+                    }
                 ]
             },
             {
                 id: 'postfix_nfs', title: "6. Postfix & NFS",
                 sections: [
-                    { heading: "Postfix", items: [
-                        { text: "Installation de Postfix.", commands: [{cmd: "dnf install postfix", desc: "Installe le serveur de messagerie SMTP Postfix"}] },
-                        { text: "Configuration de main.cf.", path: "/etc/postfix/main.cf", code: [
-                            { line: "myhostname = srvdns1.ntic.ma", desc: "Définit le nom d'hôte complet (FQDN) du serveur de messagerie" },
-                            { line: "mydomain = ntic.ma", desc: "Définit le nom de domaine internet local géré par le serveur" },
-                            { line: "myorigin = $mydomain", desc: "Domaine ajouté aux courriers expédiés localement (provenance apparente)" },
-                            { line: "inet_interfaces = all", desc: "Le serveur écoute et accepte les connexions sur toutes les interfaces réseau" },
-                            { line: "mynetworks = 192.168.10.0/24, 127.0.0.0/8", desc: "Spécifie les réseaux de confiance autorisés à envoyer et relayer des emails" },
-                            { line: "home_mailbox = Maildir/", desc: "Définit le format de stockage des boîtes aux lettres (format Maildir dans le dossier utilisateur)" }
-                        ]}
-                    ]},
-                    { heading: "Serveur NFS", items: [
-                        { text: "Installation du paquet NFS Server et création du dossier.", commands: [{cmd: "dnf install nfs-server", desc: "Installe le serveur de partage de fichiers NFS"}, {cmd: "mkdir /ID-Sharing", desc: "Crée le dossier qui sera partagé sur le réseau"}] },
-                        { text: "Exporter le dossier à travers le réseau.", path: "/etc/exports", code: [
-                            { line: "/ID-Sharing 192.168.10.0/24(rw)", desc: "Exporte le dossier /ID-Sharing au sous-réseau avec droits de Lecture/Écriture (rw)" }
-                        ]},
-                        { text: "Appliquer les règles d'exports.", commands: [{cmd: "exportfs -r", desc: "Recharge la configuration /etc/exports pour appliquer les nouveaux partages"}] }
-                    ]},
-                    { heading: "Client NFS", items: [
-                        { text: "Vérifier les exports disponibles sur le serveur (depuis client).", commands: [{cmd: "showmount -e 192.168.10.5", desc: "Affiche la liste des dossiers partagés (exports) par le serveur NFS distant"}] },
-                        { text: "Montage manuel.", commands: [{cmd: "mkdir /IDData", desc: "Crée le point de montage local pour le client NFS"}, {cmd: "mount 192.168.10.5:/ID-Sharing /IDData", desc: "Monte temporairement le partage NFS distant sur le dossier local"}] },
-                        { text: "Montage persistant dans fstab.", path: "/etc/fstab", code: [
-                            { line: "192.168.10.5:/ID-Sharing /IDData nfs defaults 0 0", desc: "Montage automatique : IP:Distant Local Type Options Dump Fsck" }
-                        ]}
-                    ]}
+                    {
+                        heading: "Postfix", items: [
+                            { text: "Installation de Postfix.", commands: [{ cmd: "dnf install postfix", desc: "Installe le serveur SMTP" }] },
+                            {
+                                text: "Configuration de main.cf.", path: "/etc/postfix/main.cf", code: [
+                                    { line: "myhostname = srvdns1.ntic.ma", desc: "FQDN" },
+                                    { line: "mydomain = ntic.ma", desc: "Domaine" },
+                                    { line: "myorigin = $mydomain", desc: "Origine" },
+                                    { line: "inet_interfaces = all", desc: "Interfaces" },
+                                    { line: "mynetworks = 192.168.10.0/24, 127.0.0.0/8", desc: "Trust" },
+                                    { line: "home_mailbox = Maildir/", desc: "Maildir" },
+                                    { line: "mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain", desc: "Destination finale (CRUCIAL)" }
+                                ]
+                            },
+                            { text: "Démarrage et Pare-feu.", commands: [{ cmd: "systemctl enable --now postfix", desc: "Démarre Postfix" }, { cmd: "firewall-cmd --permanent --add-service=smtp", desc: "Ouvre SMTP" }, { cmd: "firewall-cmd --reload", desc: "Applique" }] }
+                        ]
+                    },
+                    {
+                        heading: "Serveur NFS", items: [
+                            { text: "Installation, dossier et droits.", commands: [{ cmd: "dnf install nfs-utils", desc: "Installe nfs-utils" }, { cmd: "mkdir /ID-Sharing", desc: "Crée dossier" }, { cmd: "chmod 777 /ID-Sharing", desc: "Droits Linux" }] },
+                            {
+                                text: "Exporter le dossier.", path: "/etc/exports", code: [
+                                    { line: "/ID-Sharing 192.168.10.0/24(rw,sync)", desc: "Export avec sync" }
+                                ]
+                            },
+                            { text: "Appliquer et Pare-feu.", commands: [{ cmd: "exportfs -arv", desc: "Détails exports" }, { cmd: "systemctl enable --now nfs-server", desc: "Démarre NFS" }, { cmd: "firewall-cmd --permanent --add-service={nfs,rpc-bind,mountd}", desc: "Ouvre ports NFS" }, { cmd: "firewall-cmd --reload", desc: "Applique" }] }
+                        ]
+                    },
+                    {
+                        heading: "Client NFS", items: [
+                            { text: "Montage manuel.", commands: [{ cmd: "mkdir /IDData", desc: "Point de montage" }, { cmd: "mount 192.168.10.5:/ID-Sharing /IDData", desc: "Montage manuel" }] },
+                            {
+                                text: "Fstab persistant.", path: "/etc/fstab", code: [
+                                    { line: "192.168.10.5:/ID-Sharing /IDData nfs defaults,_netdev 0 0", desc: "Montage sécurisé avec _netdev" }
+                                ]
+                            },
+                            { text: "Tester le fstab.", commands: [{ cmd: "mount -a", desc: "Vérifie le fstab" }] }
+                        ]
+                    }
                 ]
             },
             {
                 id: 'samba', title: "7. Samba (SMB/CIFS)",
                 sections: [
-                    { heading: "Utilisateurs et Groupes", items: [
-                        { text: "Création du groupe, de l'utilisateur, et ajout du mot de passe Samba.", commands: [{cmd: "groupadd groups", desc: "Crée un nouveau groupe système nommé 'groups'"}, {cmd: "useradd ahmed -g groups", desc: "Crée l'utilisateur système 'ahmed' et l'assigne au groupe 'groups'"}, {cmd: "smbpasswd -a ahmed", desc: "Ajoute l'utilisateur 'ahmed' à la base de données Samba et lui demande un mot de passe"}] }
-                    ]},
-                    { heading: "Serveur Samba", items: [
-                        { text: "Installation de Samba.", commands: [{cmd: "dnf install samba", desc: "Installe le serveur de partage de fichiers Samba (compatible Windows)"}] },
-                        { text: "Configuration du fichier de partage.", path: "/etc/samba/smb.conf", code: [
-                            { line: "[PARTAGE_ID]", desc: "Nom de la ressource partagée telle qu'elle apparaîtra pour les clients (Windows/Linux)" },
-                            { line: "    path = /id-data", desc: "Chemin absolu vers le dossier physique sur le serveur Linux" },
-                            { line: "    writable = yes", desc: "Autorise les modifications et l'écriture dans ce partage" },
-                            { line: "    valid users = ahmed", desc: "Restreint l'accès au partage uniquement à l'utilisateur spécifié (ahmed)" },
-                            { line: "    hosts allow = 192.168.10.0/24", desc: "Autorise uniquement les connexions provenant de ce sous-réseau spécifique" }
-                        ]}
-                    ]},
-                    { heading: "Client Linux Samba", items: [
-                        { text: "Installation des paquets clients cifs.", commands: [{cmd: "dnf install samba-client cifs-utils", desc: "Installe les outils clients pour accéder aux partages Samba et monter du CIFS"}] },
-                        { text: "Connexion en mode CLI interactif.", commands: [{cmd: "smbclient //192.168.10.10/PARTAGE_ID -U ahmed", desc: "Accède au partage Samba via une interface en ligne de commande (type FTP)"}] },
-                        { text: "Montage local via cifs.", commands: [{cmd: "mkdir /ID-REP", desc: "Crée le point de montage local sur la machine cliente"}, {cmd: "mount -t cifs //192.168.10.10/PARTAGE_ID /ID-REP -o username=ahmed,password=[password]", desc: "Monte le partage Windows/Samba sur le système de fichiers local Linux en fournissant les identifiants"}] }
-                    ]}
+                    {
+                        heading: "Utilisateurs et Groupes", items: [
+                            { text: "Création ahmed et mot de passe Samba.", commands: [{ cmd: "groupadd groups", desc: "Crée groupe" }, { cmd: "useradd ahmed -g groups", desc: "Crée user" }, { cmd: "smbpasswd -a ahmed", desc: "Pass Samba" }] }
+                        ]
+                    },
+                    {
+                        heading: "Serveur Samba", items: [
+                            { text: "Installation et SELinux.", commands: [{ cmd: "dnf install samba", desc: "Installe Samba" }, { cmd: "mkdir /id-data", desc: "Dossier" }, { cmd: "chown ahmed:groups /id-data", desc: "Propriété" }, { cmd: "chmod 770 /id-data", desc: "Droits" }, { cmd: "chcon -t samba_share_t /id-data", desc: "Contexte SELinux (CRUCIAL)" }] },
+                            {
+                                text: "Configuration smb.conf.", path: "/etc/samba/smb.conf", code: [
+                                    { line: "[PARTAGE_ID]", desc: "Nom partage" },
+                                    { line: "    path = /id-data", desc: "Chemin" },
+                                    { line: "    writable = yes", desc: "Ecriture" },
+                                    { line: "    valid users = ahmed", desc: "Accès" },
+                                    { line: "    hosts allow = 192.168.10.0/24", desc: "IP" }
+                                ]
+                            },
+                            { text: "Démarrage et Pare-feu.", commands: [{ cmd: "systemctl enable --now smb nmb", desc: "Démarre services" }, { cmd: "firewall-cmd --permanent --add-service=samba", desc: "Ouvre Samba" }, { cmd: "firewall-cmd --reload", desc: "Applique" }] }
+                        ]
+                    },
+                    {
+                        heading: "Client Linux Samba (Installation & CLI)",
+                        items: [
+                            { text: "Installation des paquets clients cifs.", commands: [{ cmd: "dnf install samba-client cifs-utils", desc: "Installe le client Samba et les utilitaires CIFS" }] },
+                            { text: "Connexion en mode CLI interactif.", commands: [{ cmd: "smbclient //192.168.10.10/PARTAGE_ID -U ahmed", desc: "Connexion interactive pour tester l'accès" }] }
+                        ]
+                    },
+                    {
+                        heading: "Client Linux Samba (Montage Local)",
+                        items: [
+                            {
+                                text: "Création du point de montage et montage manuel.", commands: [
+                                    { cmd: "mkdir /ID-REP", desc: "Crée le répertoire de destination" },
+                                    { cmd: "mount -t cifs //192.168.10.10/PARTAGE_ID /ID-REP -o username=ahmed,password=[password]", desc: "Monte le partage manuellement avec les options" }
+                                ]
+                            },
+                            {
+                                text: "Configuration persistante (Credentials).", commands: [
+                                    { cmd: "echo \"username=ahmed\" > /root/.smbcredentials", desc: "Fichier secure pour les identifiants" },
+                                    { cmd: "chmod 600 /root/.smbcredentials", desc: "Protection du fichier credentials" }
+                                ]
+                            },
+                            {
+                                text: "Ligne fstab pour montage automatique.", path: "/etc/fstab", code: [
+                                    { line: "//192.168.10.10/PARTAGE_ID /ID-REP cifs credentials=/root/.smbcredentials,_netdev 0 0", desc: "Montage automatique au démarrage via CIFS" }
+                                ]
+                            },
+                            { text: "Tester la configuration du fstab.", commands: [{ cmd: "mount -a", desc: "Vérifie et applique les montages du fstab" }] }
+                        ]
+                    }
                 ]
             },
             {
                 id: 'ftp_lvm', title: "8. FTP, Disques, Quotas & LVM",
                 sections: [
-                    { heading: "Serveur FTP (vsftpd)", items: [
-                        { text: "Installation et ajout des utilisateurs.", commands: [{cmd: "dnf install vsftpd -y", desc: "Installe le serveur FTP Très Sécurisé (vsftpd) sans demander de confirmation"}, {cmd: "useradd userftp1", desc: "Crée le premier utilisateur FTP"}, {cmd: "useradd userftp2", desc: "Crée le second utilisateur FTP"}] },
-                        { text: "Création d'un fichier public de test.", commands: [{cmd: "echo \"fichier FTP public\" > /var/ftp/pub/FileFtp.txt", desc: "Crée un fichier texte de test dans le répertoire public FTP par défaut"}] },
-                        { text: "Configuration vsftpd.", path: "/etc/vsftpd/vsftpd.conf", code: [
-                            { line: "anonymous_enable=NO", desc: "Désactive la connexion pour les utilisateurs anonymes (renforce la sécurité)" },
-                            { line: "local_enable=YES", desc: "Autorise la connexion au FTP pour les utilisateurs locaux du système (userftp1, etc.)" },
-                            { line: "write_enable=YES", desc: "Autorise le téléversement et la modification de fichiers sur le serveur" },
-                            { line: "chroot_local_user=YES", desc: "Enferme les utilisateurs locaux dans leur répertoire personnel (prison chroot)" },
-                            { line: "ftpd_banner=Bienvenue", desc: "Définit le message d'accueil qui sera affiché lors de la connexion du client" },
-                            { line: "userlist_enable=YES", desc: "Active la gestion stricte d'accès via la liste spécifiée dans user_list" }
-                        ]},
-                        { text: "Ajouter userftp2 à la user_list.", commands: [{cmd: "echo \"userftp2\" >> /etc/vsftpd/user_list", desc: "Ajoute userftp2 à la liste des utilisateurs pour contrôler (autoriser/refuser) ses accès"}] },
-                        { text: "Test de connexion et téléchargement.", commands: [{cmd: "ftp -u userftp1 192.168.10.10", desc: "Se connecte au serveur FTP avec l'utilisateur userftp1"}, {cmd: "get fileserver", desc: "Commande FTP interne pour télécharger un fichier unique nommé 'fileserver'"}, {cmd: "mget *", desc: "Commande FTP interne pour télécharger de multiples fichiers (tout le répertoire)"}] }
-                    ]},
-                    { heading: "Disques et Quotas", items: [
-                        { text: "Partitionnement et système de fichiers.", commands: [{cmd: "fdisk /dev/sdb", desc: "Lance l'outil interactif fdisk pour créer/modifier des partitions sur le disque sdb"}, {cmd: "mkfs.ext4 /dev/sdb1", desc: "Formate la partition fraîchement créée (sdb1) avec le système de fichiers ext4"}, {cmd: "tune2fs -m 1 /dev/sdb1", desc: "Ajuste les paramètres: ne réserve plus que 1% (au lieu de 5%) de l'espace pour l'utilisateur root"}] },
-                        { text: "Commandes de gestion des Quotas.", commands: [{cmd: "mkdir /mnt/data", desc: "Crée le répertoire qui servira de point de montage pour le disque"}, {cmd: "quotacheck -cum /mnt/data", desc: "Analyse le montage et crée les fichiers d'index de quotas aquota.user et aquota.group"}, {cmd: "quotaon /mnt/data", desc: "Active la surveillance et l'application stricte des quotas sur ce point de montage"}, {cmd: "edquota -u userftp1", desc: "Ouvre l'éditeur par défaut pour définir manuellement les limites (Soft/Hard) de l'utilisateur"}] },
-                        { text: "Montage avec support des quotas.", path: "/etc/fstab", code: [
-                            { line: "UUID=[UUID] /mnt/data ext4 defaults,usrquota,grpquota 0 0", desc: "Définit le montage automatique au démarrage en activant les quotas utilisateurs et de groupes" }
-                        ]},
-                        { text: "Appliquer le point de montage.", commands: [{cmd: "mount -a", desc: "Lit le fichier fstab et monte tous les systèmes de fichiers non montés"}, {cmd: "mount -o remount /mnt/data", desc: "Remonte le système de fichiers à chaud pour appliquer les options de quotas sans le démonter"}] }
-                    ]},
-                    { heading: "LVM", items: [
-                        { text: "Création Volume Physique (PV) et Groupe de Volumes (VG).", commands: [{cmd: "pvcreate /dev/sdb2", desc: "Initialise la partition sdb2 pour être utilisée comme Volume Physique par LVM"}, {cmd: "vgcreate vg-data /dev/sdb2", desc: "Crée un nouveau Groupe de Volumes (VG) nommé 'vg-data' contenant la partition sdb2"}] },
-                        { text: "Création d'un Volume Logique (LV) de 500M.", commands: [{cmd: "lvcreate -L 500M -n lv1 vg-data", desc: "Crée un Volume Logique (LV) nommé 'lv1' de 500 Mo à l'intérieur du groupe 'vg-data'"}] },
-                        { text: "Agrandissement (Extension) du LV de +300M.", commands: [{cmd: "lvextend -L +300M /dev/vg-data/lv1", desc: "Étend dynamiquement la taille du Volume Logique 'lv1' en lui ajoutant 300 Mo supplémentaires"}] }
-                    ]}
+                    {
+                        heading: "Serveur FTP (vsftpd)", items: [
+                            {
+                                text: "Installation et redirection des utilisateurs.", commands: [
+                                    { cmd: "dnf install vsftpd -y", desc: "Installe le serveur FTP vsftpd" },
+                                    { cmd: "useradd userftp2", desc: "Crée un second utilisateur FTP" },
+                                    { cmd: "echo \"userftp2\" >> /etc/vsftpd/user_list", desc: "Ajoute l'utilisateur à la liste autorisée" }
+                                ]
+                            },
+                            {
+                                text: "Configuration de vsftpd.conf.", path: "/etc/vsftpd/vsftpd.conf", code: [
+                                    { line: "anonymous_enable=NO", desc: "Désactive l'accès anonyme" },
+                                    { line: "local_enable=YES", desc: "Autorise les utilisateurs locaux" },
+                                    { line: "write_enable=YES", desc: "Autorise les commandes d'écriture (upload)" },
+                                    { line: "chroot_local_user=YES", desc: "Enferme les utilisateurs dans leur home" },
+                                    { line: "allow_writeable_chroot=YES", desc: "Autorise le chroot sur un dossier avec droits d'écriture" },
+                                    { line: "ftpd_banner=Bienvenue", desc: "Bannière d'accueil personnalisée" },
+                                    { line: "userlist_enable=YES", desc: "Active la gestion par liste d'utilisateurs" },
+                                    { line: "userlist_deny=NO", desc: "La liste devient une liste blanche (seuls les inscrits accèdent)" }
+                                ]
+                            },
+                            { text: "SELinux et Pare-feu.", commands: [{ cmd: "setsebool -P ftp_home_dir on", desc: "Autorise FTP à accéder aux répertoires personnels" }, { cmd: "systemctl enable --now vsftpd", desc: "Démarre et active vsftpd" }, { cmd: "firewall-cmd --permanent --add-service=ftp", desc: "Ouvre le port FTP" }, { cmd: "firewall-cmd --reload", desc: "Recharge le pare-feu" }] }
+                        ]
+                    },
+                    {
+                        heading: "Client FTP & Tests", items: [
+                            {
+                                text: "Test de connexion et téléchargement.", commands: [
+                                    { cmd: "ftp -u userftp1 192.168.10.10", desc: "Se connecte en spécifiant l'utilisateur" }
+                                ]
+                            },
+                            {
+                                text: "Opérations interactives FTP.", commands: [
+                                    { cmd: "get fileserver", desc: "Télécharge le fichier 'fileserver' depuis le serveur" },
+                                    { cmd: "mget *", desc: "Télécharge tous les fichiers du répertoire distant (Multiple Get)" }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        heading: "Disques et Quotas", items: [
+                            { text: "Partitionnement et système de fichiers.", commands: [{ cmd: "fdisk /dev/sdb", desc: "Fdisk" }, { cmd: "mkfs.ext4 /dev/sdb1", desc: "Format ext4" }, { cmd: "tune2fs -m 1 /dev/sdb1", desc: "Définit le pourcentage de blocs réservés à 1%" }] },
+                            {
+                                text: "Fstab Quotas.", path: "/etc/fstab", code: [
+                                    { line: "UUID=[UUID] /mnt/data ext4 defaults,usrquota,grpquota 0 0", desc: "Options quotas" }
+                                ]
+                            },
+                            { text: "Séquence Quotas.", commands: [{ cmd: "mount -a", desc: "MONTER D'ABORD" }, { cmd: "quotacheck -cumg /mnt/data", desc: "Crée index" }, { cmd: "quotaon /mnt/data", desc: "Active" }, { cmd: "edquota -u userftp1", desc: "Définit" }] }
+                        ]
+                    },
+                    {
+                        heading: "LVM", items: [
+                            { text: "Création et LV.", commands: [{ cmd: "pvcreate /dev/sdb2", desc: "PV" }, { cmd: "vgcreate vg-data /dev/sdb2", desc: "VG" }, { cmd: "lvcreate -L 500M -n lv1 vg-data", desc: "LV" }, { cmd: "mkfs.ext4 /dev/vg-data/lv1", desc: "Format (Indispensable)" }] },
+                            { text: "Extension et Resize.", commands: [{ cmd: "lvextend -L +300M /dev/vg-data/lv1", desc: "Extend" }, { cmd: "resize2fs /dev/vg-data/lv1", desc: "REZISE FS (CRUCIAL)" }] }
+                        ]
+                    }
                 ]
             }
         ];
 
         // MISTAKE TRACKING / LEVENSHTEIN ENGINE
         function levenshtein(a, b) {
-            if(a.length === 0) return b.length;
-            if(b.length === 0) return a.length;
+            if (a.length === 0) return b.length;
+            if (b.length === 0) return a.length;
             let matrix = [];
-            for(let i = 0; i <= b.length; i++) matrix[i] = [i];
-            for(let j = 0; j <= a.length; j++) matrix[0][j] = j;
-            for(let i = 1; i <= b.length; i++) {
-                for(let j = 1; j <= a.length; j++) {
-                    if(b.charAt(i-1) === a.charAt(j-1)) matrix[i][j] = matrix[i-1][j-1];
-                    else matrix[i][j] = Math.min(matrix[i-1][j-1] + 1, Math.min(matrix[i][j-1] + 1, matrix[i-1][j] + 1));
+            for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+            for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+            for (let i = 1; i <= b.length; i++) {
+                for (let j = 1; j <= a.length; j++) {
+                    if (b.charAt(i - 1) === a.charAt(j - 1)) matrix[i][j] = matrix[i - 1][j - 1];
+                    else matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1));
                 }
             }
             return matrix[b.length][a.length];
@@ -826,7 +1168,7 @@
             let e = expected.trim().replace(/\r\n/g, '\n');
             if (extreme) return i === e ? 'correct' : 'wrong';
             if (i === e) return 'correct';
-            
+
             // Strip multiple spaces for comparison tolerance
             i = i.replace(/\s+/g, ' ');
             e = e.replace(/\s+/g, ' ');
@@ -835,7 +1177,7 @@
             const dist = levenshtein(i, e);
             const maxLen = Math.max(i.length, e.length);
             const sim = maxLen === 0 ? 1 : 1 - (dist / maxLen);
-            
+
             if (sim >= 0.90) return 'typo';
             return 'wrong';
         }
@@ -866,22 +1208,22 @@
                 const topics = ref(linuxData);
                 const currentRoute = ref('dashboard');
                 const isExtremeMode = ref(false);
-                
+
                 // TRACKING & PERSISTENCE
                 const stats = ref({ totalAttempts: 0, hits: 0, itemStats: {} });
                 const loadStats = () => {
                     const s = localStorage.getItem('linux_neuro_engine_stats');
                     if (s) {
-                        try { stats.value = JSON.parse(s); } catch(e){}
+                        try { stats.value = JSON.parse(s); } catch (e) { }
                     }
                 };
                 const saveStats = () => localStorage.setItem('linux_neuro_engine_stats', JSON.stringify(stats.value));
 
                 const globalAccuracy = computed(() => stats.value.totalAttempts > 0 ? Math.round((stats.value.hits / stats.value.totalAttempts) * 100) : 0);
-                
+
                 const getTaskAccuracy = (taskId) => {
                     const s = stats.value.itemStats[taskId];
-                    if(!s || s.attempts === 0) return 0;
+                    if (!s || s.attempts === 0) return 0;
                     return Math.round((s.hits / s.attempts) * 100);
                 };
 
@@ -917,8 +1259,8 @@
                 };
 
                 // NAV CLASS
-                const navClass = (route) => currentRoute.value === route 
-                    ? "w-full text-left px-3 py-2 rounded-md flex items-center bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 font-medium transition" 
+                const navClass = (route) => currentRoute.value === route
+                    ? "w-full text-left px-3 py-2 rounded-md flex items-center bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 font-medium transition"
                     : "w-full text-left px-3 py-2 rounded-md flex items-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-800 transition";
 
                 // --- REVISION / CHEAT SHEET MODE ---
@@ -933,7 +1275,7 @@
                 const taskRefs = ref([]);
 
                 watch(activeStudyTopicId, (newId) => {
-                    currentStudyTasks.value = allTasks.filter(t => t.topicId === newId).map(t => ({...t, userAnswer: '', status: ''}));
+                    currentStudyTasks.value = allTasks.filter(t => t.topicId === newId).map(t => ({ ...t, userAnswer: '', status: '' }));
                     activeTaskIndex.value = 0;
                     taskRefs.value = [];
                     nextTick(() => focusActiveTask());
@@ -947,7 +1289,7 @@
                 };
 
                 const resetTask = (task) => { task.userAnswer = ''; task.status = ''; };
-                const focusActiveTask = () => { if(taskRefs.value[activeTaskIndex.value]) taskRefs.value[activeTaskIndex.value].focus(); };
+                const focusActiveTask = () => { if (taskRefs.value[activeTaskIndex.value]) taskRefs.value[activeTaskIndex.value].focus(); };
                 const advanceFocus = () => {
                     if (activeTaskIndex.value < currentStudyTasks.value.length - 1) {
                         activeTaskIndex.value++;
@@ -979,13 +1321,13 @@
                 const drillFeedbackStatus = ref('');
                 let drillInterval = null;
                 const drillInput = ref(null);
-                const drillAccuracy = computed(() => drillTotal.value > 0 ? Math.round((drillScore.value / drillTotal.value)*100) : 0);
+                const drillAccuracy = computed(() => drillTotal.value > 0 ? Math.round((drillScore.value / drillTotal.value) * 100) : 0);
 
                 const startDailyDrill = () => {
                     currentRoute.value = 'drill';
                     // Get 20 random tasks
                     const shuffled = [...allTasks].sort(() => 0.5 - Math.random());
-                    drillQueue.value = shuffled.slice(0, 20).map(t => ({...t, userAnswer: ''}));
+                    drillQueue.value = shuffled.slice(0, 20).map(t => ({ ...t, userAnswer: '' }));
                     drillScore.value = 0;
                     drillTotal.value = drillQueue.length;
                     drillActive.value = true;
@@ -1009,7 +1351,7 @@
                             evaluateDrill(true); // timeout
                         }
                     }, 1000);
-                    nextTick(() => { if(drillInput.value) drillInput.value.focus(); });
+                    nextTick(() => { if (drillInput.value) drillInput.value.focus(); });
                 };
 
                 const submitDrillAnswer = () => {
@@ -1044,9 +1386,9 @@
 
                 const startFlow = (topicId) => {
                     activeFlowTopicId.value = topicId;
-                    flowTasks.value = allTasks.filter(t => t.topicId === topicId).map(t => ({...t, userAnswer: '', status: ''}));
+                    flowTasks.value = allTasks.filter(t => t.topicId === topicId).map(t => ({ ...t, userAnswer: '', status: '' }));
                     flowCurrentIndex.value = 0;
-                    nextTick(() => { if(flowInputRef.value) flowInputRef.value.focus(); });
+                    nextTick(() => { if (flowInputRef.value) flowInputRef.value.focus(); });
                 };
 
                 const validateFlowTask = (task, idx) => {
@@ -1055,11 +1397,11 @@
                     recordAttempt(task.id, task.status === 'correct');
                     if (task.status === 'correct') {
                         flowCurrentIndex.value++;
-                        nextTick(() => { if(flowInputRef.value) flowInputRef.value.focus(); });
+                        nextTick(() => { if (flowInputRef.value) flowInputRef.value.focus(); });
                     }
                 };
-                
-                const resetFlowTask = (task) => { task.userAnswer = ''; task.status = ''; nextTick(() => { if(flowInputRef.value) flowInputRef.value.focus(); }); };
+
+                const resetFlowTask = (task) => { task.userAnswer = ''; task.status = ''; nextTick(() => { if (flowInputRef.value) flowInputRef.value.focus(); }); };
 
                 const getFlowDotClass = (status, idx) => {
                     if (status === 'correct') return 'border-emerald-500';
@@ -1120,4 +1462,5 @@
         app.mount('#app');
     </script>
 </body>
+
 </html>
